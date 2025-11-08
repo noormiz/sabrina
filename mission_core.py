@@ -141,4 +141,108 @@ def cruise_step(state):
     distance_remaining = state.target_distance_km - state.altitude_km
     return f"Cruising... Mission Day {state.mission_day}. Distance remaining: {distance_remaining:,.0f} km."
 
+    # mission_core.py (Continued)
+
+PLANET_GRAVITY = 0.0005 # Simplified gravity constant of the target planet
+IMPACT_VELOCITY_MAX = 0.05 # km/s maximum for a safe landing
+
+def landing_step(state, retro_burn_duration_s):
+    """
+    Simulates the landing retro-burn based on user-input duration.
+    Retro-burn duration is in seconds.
+    """
+    if state.status != "LANDING_PREP":
+        return "Not in the landing prep phase."
+
+    # 1. Calculate Fuel and Mass Changes
+    FUEL_PER_SECOND = 1.5 # Landing burns are high consumption
+    fuel_consumed = retro_burn_duration_s * FUEL_PER_SECOND
+
+    if state.fuel < fuel_consumed:
+        state.error_code = "LOW_FUEL_LANDING_CRASH"
+        state.status = "FAILURE"
+        return "CRITICAL FAILURE: Ran out of fuel during retro-burn, leading to impact."
+
+    state.fuel -= fuel_consumed
+    state.current_mass = state.dry_mass + state.fuel
     
+    # 2. Apply Physics (Deceleration)
+    # Landing involves slowing down the current velocity (deceleration)
+    
+    # Thrust Force is proportional to duration (simplified)
+    retro_thrust = retro_burn_duration_s * 500
+    
+    # Simplified Net Force (Ignore drag, just thrust vs. planet gravity)
+    net_force_N = retro_thrust - (state.current_mass * PLANET_GRAVITY)
+    
+    # Deceleration = F_net / Mass
+    deceleration_km_s = net_force_N / state.current_mass
+    
+    # Apply change to velocity (subtraction for deceleration)
+    state.velocity_km_s -= deceleration_km_s * 1 
+    # Use a fixed time step of 1s for the final moment
+
+    # 3. Check for Landing Success/Failure
+    if state.velocity_km_s <= IMPACT_VELOCITY_MAX and state.velocity_km_s >= 0:
+        state.status = "SURFACE_DATA"
+        state.velocity_km_s = 0.0 # Stop movement for clean state
+        return "Soft landing successful! Preparing to collect scientific data."
+    elif state.velocity_km_s < 0:
+        # User over-burned, or our calculation resulted in negative velocity (bad physics)
+        state.error_code = "OVER_BURN_FAILURE"
+        state.status = "FAILURE"
+        return "FAILURE: Retro-burn was too powerful, the vehicle was destroyed by excessive stress."
+    elif state.velocity_km_s > IMPACT_VELOCITY_MAX:
+        state.error_code = "HIGH_VELOCITY_IMPACT"
+        state.status = "FAILURE"
+        return "CATASTROPHIC FAILURE: Impacted the surface at high velocity."
+
+    return "Landing step incomplete (should not happen in this model)."
+
+
+# (Continue to Step 7 below)
+# mission_core.py (Continued)
+
+DATA_COLLECTION_FUEL_COST = 50 # Fuel cost to keep systems running for data collection
+
+def collect_data(state):
+    """Simulates the collection of scientific data on the surface."""
+    if state.status != "SURFACE_DATA":
+        return "Not on the surface."
+
+    if state.fuel < DATA_COLLECTION_FUEL_COST:
+        state.error_code = "INSUFFICIENT_FUEL_DATA"
+        state.status = "FAILURE"
+        return "FAILURE: Insufficient power for data systems. Must abort mission."
+        
+    # Success: Collect data and burn fuel
+    state.fuel -= DATA_COLLECTION_FUEL_COST
+    state.collected_data_units = state.required_data_units # Collect all needed data instantly
+    state.mission_day += 5 # Time taken to collect data
+    state.status = "RETURN_PREP"
+    
+    return "Data collection complete! Preparing for launch back to Earth."
+
+    # mission_core.py (Continued)
+
+def return_home(state):
+    """Final check to see if we can return home successfully."""
+    if state.status != "RETURN_PREP":
+        return "Cannot initiate return home sequence."
+        
+    # Check if we have enough fuel for the return burn (simplified)
+    FUEL_FOR_RETURN_BURN = 100 
+    if state.fuel < FUEL_FOR_RETURN_BURN:
+        state.error_code = "STRANDED_NO_RETURN_FUEL"
+        state.status = "FAILURE"
+        return "FAILURE: Not enough fuel for the return burn. Crew is stranded."
+
+    # Final Success Check
+    if state.collected_data_units >= state.required_data_units:
+        state.fuel -= FUEL_FOR_RETURN_BURN
+        state.status = "SUCCESS"
+        return "Mission COMPLETE! Crew is on course for Earth return."
+    else:
+        state.error_code = "MISSION_GOAL_FAILED"
+        state.status = "FAILURE"
+        return "FAILURE: Mission aborted. Did not collect required scientific data."

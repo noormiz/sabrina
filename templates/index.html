@@ -1,0 +1,104 @@
+<!-- templates/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>TigerHacks Space Mission Simulator</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f4f7f9; color: #333; margin: 20px; }
+        h1 { color: #007bff; }
+        h2 { color: #5a6268; border-bottom: 2px solid #ccc; padding-bottom: 5px; margin-top: 20px; }
+        .dashboard-card { background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        ul { list-style: none; padding: 0; }
+        li { padding: 5px 0; border-bottom: 1px dotted #eee; }
+        strong { font-weight: bold; }
+        button { background-color: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; transition: background-color 0.3s; }
+        button:hover { background-color: #0056b3; }
+        input[type="number"] { padding: 8px; border: 1px solid #ccc; border-radius: 4px; width: 150px; }
+        .failure { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; padding: 15px; border-radius: 8px; }
+        .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; padding: 15px; border-radius: 8px; }
+    </style>
+</head>
+<body>
+    <div class="dashboard-card">
+        <h1>🚀 Mission Control Dashboard</h1>
+
+        {% if state.status == 'SUCCESS' %}
+            <div class="success">
+                <h2>🎉 MISSION COMPLETE! 🎉</h2>
+                <p>The crew has returned home safely with **{{ state.collected_data_units }} units** of data!</p>
+                <p>Start a <a href="{{ url_for('home') }}">New Mission</a>.</p>
+            </div>
+        {% elif state.status == 'FAILURE' %}
+            <div class="failure">
+                <h2>🚨 CRITICAL MISSION FAILURE ({{ state.mission_day }} days) 🚨</h2>
+                <p>Error Code: **{{ state.error_code }}**</p>
+                <p>
+                    **MISSION CONTROL AI FEEDBACK GOES HERE** (Next development step!)
+                </p>
+                <button onclick="window.location.href='{{ url_for('home') }}'">Restart Mission</button>
+            </div>
+        {% else %}
+            <p>Current Status: <strong>{{ state.status }}</strong></p>
+        {% endif %}
+
+        <hr>
+
+        <h2>Current State</h2>
+        <ul>
+            <li>Mission Day: <strong>{{ state.mission_day }}</strong></li>
+            <li>Fuel Left: <strong>{{ state.fuel | round(2) }}</strong> units (Total: {{ state.initial_fuel }})</li>
+            <li>Altitude: <strong>{{ state.altitude_km | round(2) }}</strong> km (Target: {{ state.target_distance_km | round(0) }} km)</li>
+            <li>Velocity: <strong>{{ state.velocity_km_s | round(2) }}</strong> km/s</li>
+            <li>Data Collected: <strong>{{ state.collected_data_units }}</strong> / {{ state.required_data_units }}</li>
+        </ul>
+
+        <hr>
+
+        <!-- --- STAGE CONTROLS --- -->
+
+        {% if state.status == 'PRE_LAUNCH' %}
+            <h2>Launch Command: Earth Departure</h2>
+            <form method="POST" action="{{ url_for('launch') }}">
+                <label for="thrust_power">Enter Thrust Power (0-100%):</label>
+                <input type="number" id="thrust_power" name="thrust_power" min="0" max="100" required>
+                <button type="submit">Execute Launch Step</button>
+            </form>
+
+        {% elif state.status == 'CRUISE' %}
+            <h2>Cruise Navigation: In Transit</h2>
+            <p>The vehicle is cruising towards the target planet.</p>
+            <p>Distance Remaining: **{{ state.target_distance_km - state.altitude_km | round(0) }} km**</p>
+            
+            <form method="POST" action="{{ url_for('cruise') }}">
+                <button type="submit">Continue Cruise (10 Days)</button>
+            </form>
+
+        {% elif state.status == 'LANDING_PREP' %}
+            <h2>Landing Sequence: Retro-Burn</h2>
+            <p>**Current Velocity:** {{ state.velocity_km_s | round(2) }} km/s. Must be < {{ 0.05 }} km/s for a soft landing!</p>
+            <form method="POST" action="{{ url_for('land') }}">
+                <label for="burn_duration">Retro-Burn Duration (Seconds):</label>
+                <input type="number" id="burn_duration" name="burn_duration" min="1" required>
+                <button type="submit">Execute Landing Burn</button>
+            </form>
+
+        {% elif state.status == 'SURFACE_DATA' %}
+            <h2>Scientific Data Collection</h2>
+            <p>The lander is safely on the surface. We need {{ state.required_data_units }} data units.</p>
+            <p>Fuel cost for systems: {{ 50 }} units.</p>
+            <form method="POST" action="{{ url_for('collect') }}">
+                <button type="submit">Collect Data & Prepare for Return</button>
+            </form>
+
+        {% elif state.status == 'RETURN_PREP' %}
+            <h2>Return Home: Final Check</h2>
+            <p>Data collected: **{{ state.collected_data_units }}**. Launch is go if fuel holds!</p>
+            <form method="POST" action="{{ url_for('return') }}">
+                <button type="submit">Execute Return Launch</button>
+            </form>
+
+        {% endif %}
+    </div>
+</body>
+</html>
