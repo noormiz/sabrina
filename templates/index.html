@@ -1,104 +1,433 @@
-<!-- templates/index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>TigerHacks Space Mission Simulator</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sabrina: Exoplanet Mission</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Use Inter font -->
     <style>
-        body { font-family: Arial, sans-serif; background-color: #f4f7f9; color: #333; margin: 20px; }
-        h1 { color: #007bff; }
-        h2 { color: #5a6268; border-bottom: 2px solid #ccc; padding-bottom: 5px; margin-top: 20px; }
-        .dashboard-card { background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        ul { list-style: none; padding: 0; }
-        li { padding: 5px 0; border-bottom: 1px dotted #eee; }
-        strong { font-weight: bold; }
-        button { background-color: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; transition: background-color 0.3s; }
-        button:hover { background-color: #0056b3; }
-        input[type="number"] { padding: 8px; border: 1px solid #ccc; border-radius: 4px; width: 150px; }
-        .failure { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; padding: 15px; border-radius: 8px; }
-        .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; padding: 15px; border-radius: 8px; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0d1117; /* Dark space background */
+            color: #e6e6e6;
+        }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-thumb { background: #5a67d8; border-radius: 10px; }
+        ::-webkit-scrollbar-track { background: #161b22; }
+        .header-gradient {
+            background-image: linear-gradient(to right, #6366f1, #3b82f6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-fill-color: transparent;
+        }
+        .card-glow {
+            box-shadow: 0 0 15px rgba(99, 102, 241, 0.4);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .card-glow:hover {
+            box-shadow: 0 0 30px rgba(59, 130, 246, 0.8);
+            transform: translateY(-5px);
+        }
     </style>
 </head>
-<body>
-    <div class="dashboard-card">
-        <h1>🚀 Mission Control Dashboard</h1>
+<body class="min-h-screen p-4 md:p-8 flex flex-col items-center">
 
-        {% if state.status == 'SUCCESS' %}
-            <div class="success">
-                <h2>🎉 MISSION COMPLETE! 🎉</h2>
-                <p>The crew has returned home safely with **{{ state.collected_data_units }} units** of data!</p>
-                <p>Start a <a href="{{ url_for('home') }}">New Mission</a>.</p>
-            </div>
-        {% elif state.status == 'FAILURE' %}
-            <div class="failure">
-                <h2>🚨 CRITICAL MISSION FAILURE ({{ state.mission_day }} days) 🚨</h2>
-                <p>Error Code: **{{ state.error_code }}**</p>
-                <p>
-                    **MISSION CONTROL AI FEEDBACK GOES HERE** (Next development step!)
-                </p>
-                <button onclick="window.location.href='{{ url_for('home') }}'">Restart Mission</button>
-            </div>
-        {% else %}
-            <p>Current Status: <strong>{{ state.status }}</strong></p>
-        {% endif %}
+    <!-- Client-Side AI Tutor Logic (Stays in JS) -->
+    <script>
+        let currentStatus = '{{ state.status }}';
+        let currentPlanetName = '{{ state.target_planet_data.name if state.target_planet_data }}';
 
-        <hr>
+        // --- AI Tutor Functionality (Frontend only) ---
+        const geminiModel = "gemini-2.5-flash-preview-09-2025";
+        const apiKey = "";
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${apiKey}`;
 
-        <h2>Current State</h2>
-        <ul>
-            <li>Mission Day: <strong>{{ state.mission_day }}</strong></li>
-            <li>Fuel Left: <strong>{{ state.fuel | round(2) }}</strong> units (Total: {{ state.initial_fuel }})</li>
-            <li>Altitude: <strong>{{ state.altitude_km | round(2) }}</strong> km (Target: {{ state.target_distance_km | round(0) }} km)</li>
-            <li>Velocity: <strong>{{ state.velocity_km_s | round(2) }}</strong> km/s</li>
-            <li>Data Collected: <strong>{{ state.collected_data_units }}</strong> / {{ state.required_data_units }}</li>
-        </ul>
+        async function getAiExplanation(prompt, systemInstruction) {
+            const aiLoadingDiv = document.getElementById('ai-tutor-loading');
+            aiLoadingDiv.classList.remove('hidden');
 
-        <hr>
+            const payload = {
+                contents: [{ parts: [{ text: prompt }] }],
+                systemInstruction: { parts: [{ text: systemInstruction }] },
+                tools: [{ "google_search": {} }], 
+            };
 
-        <!-- --- STAGE CONTROLS --- -->
+            const maxRetries = 3;
+            for (let attempt = 0; attempt < maxRetries; attempt++) {
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
 
-        {% if state.status == 'PRE_LAUNCH' %}
-            <h2>Launch Command: Earth Departure</h2>
-            <form method="POST" action="{{ url_for('launch') }}">
-                <label for="thrust_power">Enter Thrust Power (0-100%):</label>
-                <input type="number" id="thrust_power" name="thrust_power" min="0" max="100" required>
-                <button type="submit">Execute Launch Step</button>
-            </form>
+                    if (response.ok) {
+                        const result = await response.json();
+                        const candidate = result.candidates?.[0];
+                        if (candidate && candidate.content?.parts?.[0]?.text) {
+                            return candidate.content.parts[0].text;
+                        }
+                    }
+                } catch (error) {
+                    console.warn(`Attempt ${attempt + 1} failed. Retrying...`);
+                    if (attempt < maxRetries - 1) {
+                        await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 1000));
+                    }
+                }
+            }
+            return "I'm having trouble connecting to the space network. Please try asking again in a moment!";
+        }
 
-        {% elif state.status == 'CRUISE' %}
-            <h2>Cruise Navigation: In Transit</h2>
-            <p>The vehicle is cruising towards the target planet.</p>
-            <p>Distance Remaining: **{{ state.target_distance_km - state.altitude_km | round(0) }} km**</p>
+        async function handleAiQuery(initialPrompt = '') {
+            const input = document.getElementById('ai-tutor-input');
+            const query = initialPrompt || input.value.trim();
+            if (!query) return;
+
+            const systemPrompt = `You are SABRINA, an AI Mission Tutor for middle school students (grades 6-8). Your tone must be encouraging, clear, and simple. Your goal is to explain complex physics and space concepts related to the current mission phase (${currentStatus}) and the selected planet (${currentPlanetName}). Use analogies and simple terms. Keep answers concise.`;
             
-            <form method="POST" action="{{ url_for('cruise') }}">
-                <button type="submit">Continue Cruise (10 Days)</button>
-            </form>
+            const prompt = `The student is currently in the ${currentStatus} phase of the mission to ${currentPlanetName}. The student asked: "${query}"`;
 
-        {% elif state.status == 'LANDING_PREP' %}
-            <h2>Landing Sequence: Retro-Burn</h2>
-            <p>**Current Velocity:** {{ state.velocity_km_s | round(2) }} km/s. Must be < {{ 0.05 }} km/s for a soft landing!</p>
-            <form method="POST" action="{{ url_for('land') }}">
-                <label for="burn_duration">Retro-Burn Duration (Seconds):</label>
-                <input type="number" id="burn_duration" name="burn_duration" min="1" required>
-                <button type="submit">Execute Landing Burn</button>
-            </form>
+            const outputDiv = document.getElementById('ai-tutor-output');
+            outputDiv.innerHTML += `<div class="mb-2 p-2 rounded-lg bg-blue-900/50 self-end max-w-xs md:max-w-md">🧑‍🚀 You: ${query}</div>`;
+            if (!initialPrompt) input.value = ''; 
+            
+            outputDiv.innerHTML += `<div id="ai-response-temp" class="mb-2 p-2 rounded-lg bg-gray-700/50 self-start max-w-xs md:max-w-md">🤖 SABRINA: Thinking...</div>`;
+            outputDiv.scrollTop = outputDiv.scrollHeight;
 
-        {% elif state.status == 'SURFACE_DATA' %}
-            <h2>Scientific Data Collection</h2>
-            <p>The lander is safely on the surface. We need {{ state.required_data_units }} data units.</p>
-            <p>Fuel cost for systems: {{ 50 }} units.</p>
-            <form method="POST" action="{{ url_for('collect') }}">
-                <button type="submit">Collect Data & Prepare for Return</button>
-            </form>
+            const responseText = await getAiExplanation(prompt, systemInstruction);
+            
+            const tempDiv = document.getElementById('ai-response-temp');
+            if (tempDiv) {
+                tempDiv.innerHTML = `🤖 SABRINA: ${responseText}`;
+                tempDiv.id = ''; 
+                tempDiv.classList.replace('bg-gray-700/50', 'bg-emerald-900/50');
+            }
 
-        {% elif state.status == 'RETURN_PREP' %}
-            <h2>Return Home: Final Check</h2>
-            <p>Data collected: **{{ state.collected_data_units }}**. Launch is go if fuel holds!</p>
-            <form method="POST" action="{{ url_for('return') }}">
-                <button type="submit">Execute Return Launch</button>
-            </form>
+            outputDiv.scrollTop = outputDiv.scrollHeight; 
+            document.getElementById('ai-tutor-loading').classList.add('hidden');
+        }
 
+        function openAiTutor(initialPrompt = '') {
+            document.getElementById('ai-tutor-modal').classList.remove('hidden');
+            document.body.classList.add('overflow-hidden');
+
+            if (initialPrompt) {
+                // Clear previous chat only if an error prompt is provided
+                document.getElementById('ai-tutor-output').innerHTML = `
+                    <div class="mb-2 p-3 rounded-lg bg-emerald-900/50 self-start max-w-xs md:max-w-md">
+                        🤖 SABRINA: Welcome! I'm your AI Mission Tutor. Ask me anything about gravity, propulsion, or the current phase of our mission!
+                    </div>
+                `; 
+                handleAiQuery(initialPrompt);
+            }
+        }
+
+        function closeAiTutor() {
+            document.getElementById('ai-tutor-modal').classList.add('hidden');
+            document.body.classList.remove('overflow-hidden');
+        }
+    </script>
+
+    <!-- Header and Mission Status Bar -->
+    <header class="w-full max-w-6xl flex justify-between items-center mb-8 p-4 bg-gray-800 rounded-xl shadow-lg">
+        <h1 class="text-4xl md:text-5xl font-extrabold header-gradient">
+            SABRINA
+        </h1>
+        <div id="mission-status-display" class="text-right">
+            {% if state.target_planet_data %}
+            <p class="text-sm md:text-base font-semibold text-emerald-300">
+                Mission: {{ state.target_planet_data.name }} - Phase: {{ state.status.replace('_', ' ') }}
+            </p>
+            <p class="text-xs md:text-sm text-gray-400">Day: {{ state.mission_day }} | Fuel: {{ state.fuel_display }} / {{ state.initial_fuel }}</p>
+            {% else %}
+            <p class="text-base font-semibold text-gray-400">Select a Planet to Begin</p>
+            {% endif %}
+        </div>
+    </header>
+
+    <!-- Main Application Container -->
+    <main id="app-container" class="w-full max-w-6xl flex flex-col items-center flex-grow">
+        
+        <!-- --- Mission Status Display --- -->
+        {% if state.status == 'FAILURE' %}
+            <div class="text-center p-8 w-full max-w-md bg-red-900/50 rounded-xl mb-6 shadow-xl">
+                <h2 class="text-3xl font-bold text-red-400 mb-2">MISSION FAILED!</h2>
+                <p class="text-lg mb-4">{{ state.error_code }}: {{ mission_result_message }}</p>
+                <p class="text-sm text-red-200">The mission cannot continue from this fatal error.</p>
+                <form action="{{ url_for('home') }}" method="get">
+                    <button type="submit" class="mt-4 px-6 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg">Start New Mission</button>
+                </form>
+            </div>
+            <script>
+                // Auto-trigger AI for failure explanation
+                window.onload = function() {
+                    openAiTutor("I just failed the mission with error code '{{ state.error_code }}'. Explain what went wrong in simple terms.");
+                }
+            </script>
+        {% elif state.status == 'SUCCESS' %}
+             <div class="text-center p-8 w-full max-w-md bg-green-900/50 rounded-xl mb-6 shadow-xl">
+                <h2 class="text-3xl font-bold text-green-400 mb-2">MISSION SUCCESS!</h2>
+                <p class="text-lg mb-4">You successfully collected {{ state.collected_data_units }} data units and returned home safely.</p>
+                <form action="{{ url_for('home') }}" method="get">
+                    <button type="submit" class="mt-4 px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg">Start Another Mission</button>
+                </form>
+            </div>
         {% endif %}
+        
+        <!-- --- 1. Selection Screen (Initial View) --- -->
+        {% if state.status == 'SELECTION' %}
+            <div class="max-w-4xl mx-auto text-center py-6">
+                <h2 class="text-3xl md:text-4xl font-bold mb-4 text-emerald-400">Choose Your Destination</h2>
+                <p class="text-lg text-gray-400">
+                    Select one of these fascinating exoplanets. Your choice determines the mission's core scientific challenge!
+                </p>
+            </div>
+            <div class="grid md:grid-cols-3 gap-6 w-full max-w-6xl mt-6">
+                {% for key, planet in exoplanets.items() %}
+                <form action="{{ url_for('select_planet_route') }}" method="post">
+                    <input type="hidden" name="planet_key" value="{{ key }}">
+                    <button type="submit" class="w-full h-full text-left p-0 border-none bg-transparent">
+                        <div class="card-glow {{ planet.bgColor }} rounded-xl p-6 flex flex-col items-center text-center cursor-pointer transition-all duration-300 transform hover:scale-[1.02]">
+                            <span class="text-6xl mb-4">{{ planet.icon }}</span>
+                            <h3 class="text-2xl font-extrabold text-white mb-2">{{ planet.name }}</h3>
+                            <p class="text-lg font-semibold text-gray-200 mb-4">{{ planet.type }}</p>
+                            <div class="w-full text-left space-y-2 text-sm text-gray-300">
+                                <p class="truncate"><span class="font-bold">Distance:</span> {{ planet.distance }}</p>
+                                <p><span class="font-bold text-yellow-300">Challenge:</span> {{ planet.focus }}</p>
+                                <p class="mt-4 text-sm">{{ planet.description }}</p>
+                            </div>
+                            <div class="mt-6 w-full py-2 px-4 bg-emerald-500 text-white font-bold rounded-lg shadow-lg">
+                                Start Mission to {{ planet.name }}
+                            </div>
+                        </div>
+                    </button>
+                </form>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <!-- --- 2. Pre-Launch Screen --- -->
+        {% if state.status == 'PRE_LAUNCH' %}
+            <div class="max-w-4xl mx-auto text-center py-6">
+                <h2 class="text-3xl md:text-4xl font-bold mb-2 text-yellow-400">Phase 1: Pre-Launch Check</h2>
+                <p class="text-xl font-semibold text-white mb-4">Challenge: Overcoming Earth's Gravity</p>
+                <p class="text-sm mt-2 text-red-300">You are starting with {{ state.initial_fuel }} units of fuel.</p>
+            </div>
+
+            <div class="bg-gray-800 p-8 rounded-xl w-full max-w-2xl mt-6 shadow-2xl">
+                <h3 class="text-2xl font-bold mb-4 text-center">Set Initial Thrust-to-Weight Ratio (TWR)</h3>
+                
+                <form id="launch-form" action="{{ url_for('launch') }}" method="post">
+                    <p class="text-center text-gray-300 mb-6">TWR > 1.0 is required for liftoff.</p>
+                    <div class="mb-8">
+                        <label for="thrustSlider" class="block text-lg font-medium text-white mb-2">Thrust Ratio (TWR): <span id="thrust-value" class="text-yellow-400">1.5</span></label>
+                        <input type="range" id="thrustSlider" name="thrust_twr" min="1.0" max="3.5" step="0.1" value="1.5" class="w-full h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer">
+                    </div>
+                    <button type="submit" class="w-full py-3 px-6 bg-green-600 hover:bg-green-700 text-white font-extrabold text-xl rounded-lg shadow-lg transition duration-200">
+                        Launch Rocket!
+                    </button>
+                </form>
+
+                {% if state.error_code %}
+                    <div class="mt-4 text-center font-bold text-lg text-yellow-400">
+                        Launch successful, but SABRINA warns: {{ mission_result_message }}
+                    </div>
+                     <script>
+                        // Auto-trigger AI for success/warning feedback
+                        window.onload = function() {
+                            openAiTutor("Launch was successful but I received a warning about efficiency. Explain why my TWR of " + document.getElementById('thrustSlider').value + " was inefficient for a mission to {{ state.target_planet_data.name }}.");
+                        }
+                    </script>
+                {% endif %}
+            </div>
+            <script>
+                document.getElementById('thrustSlider').addEventListener('input', (e) => {
+                    document.getElementById('thrust-value').textContent = e.target.value;
+                });
+            </script>
+        {% endif %}
+        
+        <!-- --- 3. Cruising Screen --- -->
+        {% if state.status == 'CRUISING' %}
+            {% set distance_remaining = state.target_distance_km - state.altitude_km %}
+            <div class="max-w-4xl mx-auto text-center py-6">
+                <h2 class="text-3xl md:text-4xl font-bold mb-2 text-indigo-400">Phase 2: Deep Space Cruise</h2>
+                <p class="text-xl font-semibold text-white mb-4">Challenge: Mid-Course Correction Burn</p>
+                <p class="text-lg text-gray-400">
+                    Distance remaining: <span class="text-yellow-300">{{ "{:,.0f}".format(distance_remaining) }} km</span>. Current Velocity: {{ state.velocity_display }} km/s.
+                </p>
+            </div>
+
+            <div class="bg-gray-800 p-8 rounded-xl w-full max-w-2xl mt-6 shadow-2xl">
+                <h3 class="text-2xl font-bold mb-4 text-center">Set Correction Burn Duration</h3>
+                
+                <form action="{{ url_for('cruise') }}" method="post">
+                    <p class="text-center text-gray-300 mb-4">
+                        Current Fuel: {{ state.fuel_display }}. Each second of burn costs {{ (state.initial_fuel | float) / state.initial_fuel * 1.5 }} units of fuel.
+                    </p>
+
+                    <div class="mb-8">
+                        <label for="burnSlider" class="block text-lg font-medium text-white mb-2">Burn Duration (Seconds): <span id="burn-value" class="text-yellow-400">15</span>s</label>
+                        <input type="range" id="burnSlider" name="burn_duration" min="0" max="60" step="1" value="15" class="w-full h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer">
+                    </div>
+
+                    <button type="submit" class="w-full py-3 px-6 bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xl rounded-lg shadow-lg transition duration-200">
+                        Perform Burn & Continue Cruise (10 Days)
+                    </button>
+                </form>
+                 {% if state.error_code == 'SUBOPTIMAL_BURN' %}
+                    <div class="mt-4 text-center font-bold text-lg text-yellow-400">
+                        WARNING: Burn was sub-optimal. Check efficiency!
+                    </div>
+                     <script>
+                        window.onload = function() {
+                            openAiTutor("I chose a sub-optimal burn during cruising. Explain how I can balance speed and fuel conservation better for the mission to {{ state.target_planet_data.name }}.");
+                        }
+                    </script>
+                {% endif %}
+            </div>
+            <script>
+                document.getElementById('burnSlider').addEventListener('input', (e) => {
+                    document.getElementById('burn-value').textContent = e.target.value;
+                });
+            </script>
+        {% endif %}
+        
+        <!-- --- 4. Landing Screen (New) --- -->
+        {% if state.status == 'LANDING_PREP' %}
+            {% set gravity_display = (0.0005 * state.target_planet_data.gravityFactor * 1000) | round(2) %}
+            {% set drag_info = 'Very High Drag (Use minimal retro-burn!)' if state.target_planet_data.atmosphereDrag > 1.5 else ('Very Low Drag (Need max retro-burn!)' if state.target_planet_data.atmosphereDrag < 0.5 else 'Moderate Drag') %}
+            
+            <div class="max-w-4xl mx-auto text-center py-6">
+                <h2 class="text-3xl md:text-4xl font-bold mb-2 text-pink-400">Phase 3: Landing Preparation</h2>
+                <p class="text-xl font-semibold text-white mb-4">Challenge: Decelerate for Safe Touchdown</p>
+                <p class="text-lg text-gray-400">
+                    Target: {{ state.target_planet_data.name }}. Gravity: {{ gravity_display }} m/s². Atmosphere: <span class="text-yellow-300">{{ drag_info }}</span>
+                </p>
+                <p class="text-sm mt-2 text-red-300">
+                    Current Velocity: **{{ state.velocity_display }} km/s**. You must reduce this below 0.05 km/s.
+                </p>
+            </div>
+
+            <div class="bg-gray-800 p-8 rounded-xl w-full max-w-2xl mt-6 shadow-2xl">
+                <h3 class="text-2xl font-bold mb-4 text-center">Set Retro-Burn Duration</h3>
+                
+                <form action="{{ url_for('land') }}" method="post">
+                    <p class="text-center text-gray-300 mb-4">
+                        Burn duration controls the braking force. (Current Fuel: {{ state.fuel_display }})
+                    </p>
+
+                    <div class="mb-8">
+                        <label for="landingBurnSlider" class="block text-lg font-medium text-white mb-2">Retro-Burn Duration (Seconds): <span id="landing-burn-value" class="text-yellow-400">5</span>s</label>
+                        <input type="range" id="landingBurnSlider" name="burn_duration" min="0" max="15" step="1" value="5" class="w-full h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer">
+                    </div>
+
+                    <button type="submit" class="w-full py-3 px-6 bg-red-600 hover:bg-red-700 text-white font-extrabold text-xl rounded-lg shadow-lg transition duration-200">
+                        Engage Retro-Thrusters
+                    </button>
+                </form>
+            </div>
+            <script>
+                document.getElementById('landingBurnSlider').addEventListener('input', (e) => {
+                    document.getElementById('landing-burn-value').textContent = e.target.value;
+                });
+            </script>
+        {% endif %}
+
+        <!-- --- 5. Data Collection Screen (Placeholder) --- -->
+        {% if state.status == 'SURFACE_DATA' %}
+            <div class="max-w-4xl mx-auto text-center py-6">
+                <h2 class="text-3xl md:text-4xl font-bold mb-2 text-emerald-400">Phase 4: Data Collection</h2>
+                <p class="text-xl font-semibold text-white mb-4">Mission Success is within reach!</p>
+                <p class="text-lg text-gray-400">
+                    You have successfully landed on {{ state.target_planet_data.name }}. Initiate data collection systems now! This will consume fuel for scientific equipment.
+                </p>
+            </div>
+            <div class="bg-gray-800 p-8 rounded-xl w-full max-w-2xl mt-6 shadow-2xl">
+                <form action="{{ url_for('collect') }}" method="post">
+                    <p class="text-center text-gray-300 mb-6">
+                        Fuel remaining: {{ state.fuel_display }}. Required fuel for data collection: 50 units.
+                    </p>
+                    <button type="submit" class="w-full py-3 px-6 bg-green-500 hover:bg-green-600 text-white font-extrabold text-xl rounded-lg shadow-lg transition duration-200">
+                        Collect Data & Prepare for Return
+                    </button>
+                </form>
+            </div>
+        {% endif %}
+        
+        <!-- --- 6. Return Home Screen (Final Check) --- -->
+        {% if state.status == 'RETURN_PREP' %}
+            <div class="max-w-4xl mx-auto text-center py-6">
+                <h2 class="text-3xl md:text-4xl font-bold mb-2 text-indigo-400">Phase 5: Return to Earth</h2>
+                <p class="text-xl font-semibold text-white mb-4">Final Check: Can we make it home?</p>
+                <p class="text-lg text-gray-400">
+                    Data collected: {{ state.collected_data_units }} / {{ state.required_data_units }}. You have the required data!
+                </p>
+            </div>
+            <div class="bg-gray-800 p-8 rounded-xl w-full max-w-2xl mt-6 shadow-2xl">
+                <form action="{{ url_for('return_ship') }}" method="post">
+                    <p class="text-center text-gray-300 mb-6">
+                        Fuel remaining: {{ state.fuel_display }}. Required fuel for return burn: 100 units.
+                    </p>
+                    <button type="submit" class="w-full py-3 px-6 bg-blue-500 hover:bg-blue-600 text-white font-extrabold text-xl rounded-lg shadow-lg transition duration-200">
+                        Initiate Return Burn (Final Step!)
+                    </button>
+                </form>
+            </div>
+        {% endif %}
+
+    </main>
+
+    <!-- AI Tutor Button (Shown when target is set) -->
+    {% if state.target_planet_data %}
+    <button id="ai-tutor-button" onclick="openAiTutor()"
+        class="fixed bottom-6 right-6 p-4 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold shadow-2xl transition duration-300 z-50 transform hover:scale-105">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6">
+            <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/>
+            <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+            <line x1="12" x2="12" y1="19" y2="22"/>
+        </svg>
+    </button>
+    {% endif %}
+
+    <!-- AI Tutor Modal -->
+    <div id="ai-tutor-modal" class="hidden fixed inset-0 z-40 bg-black bg-opacity-75 flex items-center justify-center p-4">
+        <div class="bg-gray-900 rounded-xl shadow-2xl w-full max-w-lg h-full max-h-[80vh] flex flex-col">
+            <!-- Modal Header -->
+            <div class="flex justify-between items-center p-4 border-b border-gray-700 bg-gray-800 rounded-t-xl">
+                <h2 class="text-2xl font-bold text-indigo-400">🤖 SABRINA: AI Mission Tutor</h2>
+                <button onclick="closeAiTutor()" class="text-gray-400 hover:text-white p-1 rounded-full hover:bg-gray-700">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+            
+            <!-- Chat Output Area -->
+            <div id="ai-tutor-output" class="flex-grow p-4 space-y-3 overflow-y-auto flex flex-col">
+                <div class="mb-2 p-3 rounded-lg bg-emerald-900/50 self-start max-w-xs md:max-w-md">
+                    🤖 SABRINA: Welcome! I'm your AI Mission Tutor. Ask me anything about gravity, propulsion, or the current phase of our mission!
+                </div>
+            </div>
+
+            <!-- Loading Indicator -->
+            <div id="ai-tutor-loading" class="text-center p-2 hidden">
+                <p class="text-indigo-400 animate-pulse">SABRINA is calculating... (Using Google Search for context)</p>
+            </div>
+
+            <!-- Input Area -->
+            <div class="p-4 border-t border-gray-700 flex gap-2">
+                <input type="text" id="ai-tutor-input" placeholder="Ask SABRINA a question..."
+                    class="flex-grow p-3 rounded-lg bg-gray-700 text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    onkeydown="if(event.key === 'Enter') handleAiQuery()">
+                <button onclick="handleAiQuery()"
+                    class="p-3 bg-indigo-600 hover:bg-indigo-700 rounded-lg text-white font-semibold transition duration-200">
+                    Send
+                </button>
+            </div>
+        </div>
     </div>
 </body>
 </html>

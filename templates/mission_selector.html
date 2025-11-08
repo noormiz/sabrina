@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sabrina: Exoplanet Mission</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Use Inter font -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0d1117; /* Dark space background */
+            color: #e6e6e6;
+        }
+        /* Custom scrollbar for better visual integration */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #5a67d8;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #161b22;
+        }
+        /* Gradient for the header/primary elements */
+        .header-gradient {
+            background-image: linear-gradient(to right, #6366f1, #3b82f6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-fill-color: transparent;
+        }
+        .card-glow {
+            box-shadow: 0 0 15px rgba(99, 102, 241, 0.4);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .card-glow:hover {
+            box-shadow: 0 0 30px rgba(59, 130, 246, 0.8);
+            transform: translateY(-5px);
+        }
+    </style>
+</head>
+<body class="min-h-screen p-4 md:p-8 flex flex-col items-center">
+
+    <!-- Global State Variables -->
+    <script>
+        // Global variables to manage the application state
+        let currentPhase = 'selection'; // selection, pre-launch, cruising, landing, data-collection, return
+        let selectedPlanet = null;
+        let missionData = {}; // Stores mission-specific data (e.g., fuel used, mistakes made)
+        let isAuthReady = false; // Flag for Firebase Auth status
+
+        // Exoplanet data dictionary
+        const EXOPLANETS = {
+            Aetheria: {
+                name: "Aetheria",
+                type: "Frozen Moon",
+                distance: "15 Light Years",
+                challenge: "Precision Navigation (Low Gravity & Hazards)",
+                focus: "Orbital Mechanics & Scale",
+                icon: "🚀",
+                bgColor: "bg-indigo-900",
+                description: "A small, icy moon orbiting a gas giant. Its low gravity makes launch easy, but navigation is tricky due to nearby asteroid fields."
+            },
+            TerraNova: {
+                name: "Terra Nova",
+                type: "Rocky Super-Earth",
+                distance: "40 Light Years",
+                challenge: "Overcoming Intense Gravity (High Thrust Required)",
+                focus: "Gravity & Thrust",
+                icon: "🌋",
+                bgColor: "bg-red-900",
+                description: "A massive, rocky planet with intense surface gravity and a dense, volatile atmosphere. Escaping Earth and landing here will test your engineering skills."
+            },
+            Kyperus: {
+                name: "Kyperus",
+                type: "Ocean World",
+                distance: "22 Light Years",
+                challenge: "Atmospheric Deceleration (Data Collection in Water)",
+                focus: "Atmosphere & Pressure",
+                icon: "🌊",
+                bgColor: "bg-blue-900",
+                description: "Covered completely by a deep, global ocean. Landing requires maximizing atmospheric drag, and data collection involves deploying a submersible probe."
+            }
+        };
+
+        // --- Firebase Setup and Authentication (Mandatory for persistence) ---
+        // Global variables provided by the Canvas environment
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+        
+        let app, db, auth;
+        let userId = 'anonymous'; // Will be updated on successful sign-in
+
+        // Import Firebase functions using ES module dynamic import for security/scoping
+        async function initializeFirebase() {
+            try {
+                // Dynamic imports for Firebase v11
+                const { initializeApp } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js");
+                const { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js");
+                const { getFirestore, setLogLevel } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js");
+                
+                if (Object.keys(firebaseConfig).length === 0) {
+                    console.error("Firebase config is missing. Data persistence will be unavailable.");
+                    return;
+                }
+
+                // Initialize services
+                app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
+                setLogLevel('Debug'); // Enable debug logging for Firestore
+
+                // Authentication
+                if (initialAuthToken) {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                } else {
+                    await signInAnonymously(auth);
+                }
+
+                // Listen for auth state change to set userId
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        userId = user.uid;
+                        isAuthReady = true;
+                        console.log(`Firebase authenticated. User ID: ${userId}`);
+                        // Optionally load any persisted mission state here if needed
+                    } else {
+                        userId = crypto.randomUUID(); // Fallback anonymous ID
+                        isAuthReady = true;
+                        console.log("Firebase signed in anonymously.");
+                    }
+                });
+
+            } catch (error) {
+                console.error("Error initializing or authenticating Firebase:", error);
+                isAuthReady = true; // Still allow the app to run without persistence if auth fails
+            }
+        }
+
+        // --- AI Tutor Functionality (Frontend only) ---
+
+        // Simulates the AI model call (must be replaced with a real API call later)
+        const geminiModel = "gemini-2.5-flash-preview-09-2025";
+        const apiKey = "";
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${apiKey}`;
+
+        async function getAiExplanation(prompt, systemInstruction) {
+            const aiOutputDiv = document.getElementById('ai-tutor-output');
+            const aiLoadingDiv = document.getElementById('ai-tutor-loading');
+            
+            aiOutputDiv.innerHTML = '';
+            aiLoadingDiv.classList.remove('hidden');
+
+            const payload = {
+                contents: [{ parts: [{ text: prompt }] }],
+                systemInstruction: { parts: [{ text: systemInstruction }] },
+                tools: [{ "google_search": {} }], // Use Google Search for grounding
+            };
+
+            const maxRetries = 3;
+            let response;
+
+            for (let attempt = 0; attempt < maxRetries; attempt++) {
+                try {
+                    response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (response.ok) {
+                        const result = await response.json();
+                        const candidate = result.candidates?.[0];
+                        if (candidate && candidate.content?.parts?.[0]?.text) {
+                            return candidate.content.parts[0].text;
+                        }
+                    }
+                } catch (error) {
+                    console.warn(`Attempt ${attempt + 1} failed. Retrying...`);
+                    if (attempt < maxRetries - 1) {
+                        await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 1000));
+                    }
+                }
+            }
+            return "I'm having trouble connecting to the space network. Please try asking again in a moment!";
+        }
+
+        async function handleAiQuery() {
+            const input = document.getElementById('ai-tutor-input');
+            const query = input.value.trim();
+            if (!query) return;
+
+            // Define the AI persona and context
+            const systemPrompt = `You are SABRINA, an AI Mission Tutor for middle school students (grades 6-8). Your tone must be encouraging, clear, and simple. Your goal is to explain complex physics and space concepts related to the current mission phase (${currentPhase}) and the selected planet (${selectedPlanet ? selectedPlanet.name : 'N/A'}). Use analogies and simple terms. Keep answers concise.`;
+            
+            const prompt = `The student is currently in the ${currentPhase} phase of the mission to ${selectedPlanet ? selectedPlanet.name : 'an unknown planet'}. The student asked: "${query}"`;
+
+            // Append student query to chat
+            const outputDiv = document.getElementById('ai-tutor-output');
+            outputDiv.innerHTML += `<div class="mb-2 p-2 rounded-lg bg-blue-900/50 self-end max-w-xs md:max-w-md">🧑‍🚀 You: ${query}</div>`;
+            input.value = ''; // Clear input
+            
+            // Show AI response loading placeholder
+            outputDiv.innerHTML += `<div id="ai-response-temp" class="mb-2 p-2 rounded-lg bg-gray-700/50 self-start max-w-xs md:max-w-md">🤖 SABRINA: Thinking...</div>`;
+            outputDiv.scrollTop = outputDiv.scrollHeight;
+
+
+            const responseText = await getAiExplanation(prompt, systemPrompt);
+            
+            // Replace placeholder with actual response
+            const tempDiv = document.getElementById('ai-response-temp');
+            if (tempDiv) {
+                tempDiv.innerHTML = `🤖 SABRINA: ${responseText}`;
+                tempDiv.id = ''; // Remove temp ID
+                tempDiv.classList.replace('bg-gray-700/50', 'bg-emerald-900/50');
+            }
+
+            outputDiv.scrollTop = outputDiv.scrollHeight; // Scroll to bottom
+            document.getElementById('ai-tutor-loading').classList.add('hidden');
+        }
+
+        // --- Main Application Logic ---
+
+        function renderApp() {
+            const appContainer = document.getElementById('app-container');
+            const aiButton = document.getElementById('ai-tutor-button');
+            const missionDisplay = document.getElementById('mission-status-display');
+            
+            // Update mission status bar
+            if (selectedPlanet) {
+                missionDisplay.innerHTML = `
+                    <p class="text-sm md:text-base font-semibold text-emerald-300">
+                        Mission: ${selectedPlanet.name} (${selectedPlanet.type}) - Phase: ${currentPhase.toUpperCase().replace('-', ' ')}
+                    </p>
+                    <p class="text-xs md:text-sm text-gray-400">Distance: ${selectedPlanet.distance}</p>
+                `;
+                aiButton.classList.remove('hidden');
+            } else {
+                missionDisplay.innerHTML = `<p class="text-base font-semibold text-gray-400">Select a Planet to Begin</p>`;
+                aiButton.classList.add('hidden');
+            }
+
+
+            // Render the appropriate screen based on the phase
+            switch (currentPhase) {
+                case 'selection':
+                    renderSelectionScreen(appContainer);
+                    break;
+                case 'pre-launch':
+                    renderPreLaunchScreen(appContainer);
+                    break;
+                // Add cases for cruising, landing, data-collection, and return here
+                default:
+                    appContainer.innerHTML = `<div class="text-center p-8">Phase ${currentPhase} is under development.</div>`;
+            }
+        }
+
+        function selectPlanet(planetKey) {
+            selectedPlanet = EXOPLANETS[planetKey];
+            currentPhase = 'pre-launch'; // Move to the next phase
+            // Log the start of the mission (optional Firestore save point)
+            console.log(`Mission started: ${selectedPlanet.name}`);
+            renderApp();
+        }
+
+        function renderSelectionScreen(container) {
+            container.innerHTML = `
+                <div class="max-w-4xl mx-auto text-center py-6">
+                    <h2 class="text-3xl md:text-4xl font-bold mb-4 text-emerald-400">Choose Your Destination</h2>
+                    <p class="text-lg text-gray-400">
+                        Select one of these fascinating exoplanets. Your choice determines the mission's core scientific challenge!
+                    </p>
+                </div>
+                <div class="grid md:grid-cols-3 gap-6 w-full max-w-6xl mt-6">
+                    ${Object.keys(EXOPLANETS).map(key => {
+                        const planet = EXOPLANETS[key];
+                        return `
+                            <div class="card-glow ${planet.bgColor} rounded-xl p-6 flex flex-col items-center text-center cursor-pointer transition-all duration-300 transform hover:scale-[1.02]"
+                                onclick="selectPlanet('${key}')">
+                                <span class="text-6xl mb-4">${planet.icon}</span>
+                                <h3 class="text-2xl font-extrabold text-white mb-2">${planet.name}</h3>
+                                <p class="text-lg font-semibold text-gray-200 mb-4">${planet.type}</p>
+                                <div class="w-full text-left space-y-2 text-sm text-gray-300">
+                                    <p class="truncate"><span class="font-bold">Distance:</span> ${planet.distance}</p>
+                                    <p><span class="font-bold text-yellow-300">Primary Challenge:</span> ${planet.challenge}</p>
+                                    <p><span class="font-bold">Focus Topic:</span> ${planet.focus}</p>
+                                    <p class="mt-4 text-sm">${planet.description}</p>
+                                </div>
+                                <button class="mt-6 w-full py-2 px-4 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-lg shadow-lg transition duration-200">
+                                    Start Mission to ${planet.name}
+                                </button>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            `;
+        }
+
+        // --- Phase 2: Pre-Launch Screen (Setting up the first challenge) ---
+
+        function renderPreLaunchScreen(container) {
+            const planet = selectedPlanet;
+            let thrustChallenge = '';
+
+            // The challenge is tailored based on the planet's gravity/density
+            if (planet.name === 'Terra Nova') {
+                thrustChallenge = 'Terra Nova has very high gravity. You need to set a **very high initial thrust** to overcome Earth\'s gravity and ensure enough fuel is saved for the intense landing.';
+            } else if (planet.name === 'Aetheria') {
+                 thrustChallenge = 'Aetheria is far. You need to be **highly efficient** to conserve fuel for the long cruise. Set the minimum required thrust to escape Earth.';
+            } else { // Kyperus
+                thrustChallenge = 'Kyperus is a standard challenge. Balance thrust to escape Earth\'s pull while minimizing fuel use.';
+            }
+
+            container.innerHTML = `
+                <div class="max-w-4xl mx-auto text-center py-6">
+                    <h2 class="text-3xl md:text-4xl font-bold mb-2 text-yellow-400">Phase 1: Pre-Launch Check</h2>
+                    <p class="text-xl font-semibold text-white mb-4">Challenge: Overcoming Earth's Gravity</p>
+                    <p class="text-lg text-gray-400">${thrustChallenge}</p>
+                    <p class="text-sm mt-2 text-red-300">
+                        Mistake Alert! If you fail, the SABRINA AI tutor will pop up to explain why.
+                    </p>
+                </div>
+
+                <div class="bg-gray-800 p-8 rounded-xl w-full max-w-2xl mt-6 shadow-2xl">
+                    <h3 class="text-2xl font-bold mb-4 text-center">Set Initial Thrust-to-Weight Ratio</h3>
+                    
+                    <p class="text-center text-gray-300 mb-6">
+                        Earth's Gravity requires a TWR > 1.0 to lift off. Recommended range is 1.2 to 2.5.
+                    </p>
+
+                    <div class="mb-8">
+                        <label for="thrustSlider" class="block text-lg font-medium text-white mb-2">Thrust Ratio (TWR): <span id="thrust-value" class="text-yellow-400">1.5</span></label>
+                        <input type="range" id="thrustSlider" min="1.0" max="3.5" step="0.1" value="1.5" class="w-full h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer">
+                    </div>
+
+                    <button onclick="attemptLaunch()" id="launch-button"
+                        class="w-full py-3 px-6 bg-green-600 hover:bg-green-700 text-white font-extrabold text-xl rounded-lg shadow-lg transition duration-200">
+                        Launch Rocket!
+                    </button>
+
+                    <div id="launch-result" class="mt-4 text-center font-bold text-lg hidden"></div>
+                </div>
+            `;
+            // Add event listener for slider change
+            document.getElementById('thrustSlider').addEventListener('input', (e) => {
+                document.getElementById('thrust-value').textContent = e.target.value;
+            });
+        }
+
+        function attemptLaunch() {
+            const twr = parseFloat(document.getElementById('thrustSlider').value);
+            const resultDiv = document.getElementById('launch-result');
+            const planet = selectedPlanet;
+
+            // Define success conditions based on the selected planet
+            let success = false;
+            let feedback = '';
+            let aiExplanationNeeded = false;
+
+            if (twr < 1.0) {
+                // Critical failure: Gravity is stronger than thrust
+                feedback = `FATAL ERROR: Thrust too low (${twr}). Gravity pulled the rocket down. Mission failed on launch.`;
+                aiExplanationNeeded = true;
+            } else if (planet.name === 'Terra Nova') {
+                // High gravity planet requires high thrust (e.g., TWR > 2.0)
+                if (twr >= 2.0) {
+                    success = true;
+                    feedback = `SUCCESS! TWR of ${twr} was perfect to escape Earth and conserve enough fuel for the high-gravity Terra Nova landing.`;
+                } else {
+                    feedback = `MISSION ERROR: TWR of ${twr} was too low for a mission to Terra Nova. You used too much fuel fighting gravity on Earth, and won't have enough for landing.`;
+                    aiExplanationNeeded = true;
+                }
+            } else if (planet.name === 'Aetheria') {
+                // Distant planet requires high efficiency (e.g., TWR between 1.2 and 1.8)
+                if (twr >= 1.2 && twr <= 1.8) {
+                    success = true;
+                    feedback = `SUCCESS! TWR of ${twr} was highly efficient, conserving maximum fuel for the long cruise to Aetheria.`;
+                } else if (twr > 1.8) {
+                    feedback = `MISSION ERROR: TWR of ${twr} was too high for Aetheria. You wasted valuable fuel that is needed for the long cruise phase.`;
+                    aiExplanationNeeded = true;
+                } else { // twr between 1.0 and 1.2
+                    feedback = `MISSION ERROR: TWR of ${twr} resulted in a very slow and costly ascent. Fuel consumption was high.`;
+                    aiExplanationNeeded = true;
+                }
+            } else { // Kyperus (Standard condition)
+                if (twr > 1.0 && twr <= 2.5) {
+                    success = true;
+                    feedback = `SUCCESS! TWR of ${twr} was efficient for a standard mission to Kyperus.`;
+                } else if (twr > 2.5) {
+                    feedback = `MISSION ERROR: TWR of ${twr} was excessive. You wasted fuel.`;
+                    aiExplanationNeeded = true;
+                }
+            }
+
+            resultDiv.textContent = feedback;
+            resultDiv.classList.remove('hidden', 'text-green-400', 'text-red-500');
+            resultDiv.classList.add(success ? 'text-green-400' : 'text-red-500');
+            document.getElementById('launch-button').disabled = true;
+
+            if (success) {
+                // If successful, delay the transition to the next phase
+                setTimeout(() => {
+                    currentPhase = 'cruising';
+                    renderApp();
+                }, 3000);
+            } else if (aiExplanationNeeded) {
+                // If there's an error, automatically trigger the AI tutor with a specific prompt
+                const aiPrompt = `I just made a mistake in the pre-launch phase by setting the Thrust-to-Weight Ratio (TWR) to ${twr}. The feedback was: "${feedback}". Please explain to me the concept of TWR and why my choice was wrong, especially considering we are going to ${planet.name}.`;
+                openAiTutor(aiPrompt);
+            }
+        }
+        
+        // --- AI Tutor Modal Control ---
+
+        function openAiTutor(initialPrompt = '') {
+            document.getElementById('ai-tutor-modal').classList.remove('hidden');
+            document.body.classList.add('overflow-hidden');
+
+            // If an initial prompt is provided (e.g., from an error), trigger the AI immediately
+            if (initialPrompt) {
+                document.getElementById('ai-tutor-output').innerHTML = ''; // Clear previous chat
+                document.getElementById('ai-tutor-input').value = initialPrompt;
+                handleAiQuery(); // Run the AI query for the automatic error explanation
+                document.getElementById('ai-tutor-input').value = ''; // Clear the input box after sending
+            }
+        }
+
+        function closeAiTutor() {
+            document.getElementById('ai-tutor-modal').classList.add('hidden');
+            document.body.classList.remove('overflow-hidden');
+        }
+
+
+        // Start initialization and rendering
+        window.onload = () => {
+            initializeFirebase().then(() => {
+                renderApp();
+            });
+        };
+    </script>
+
+    <!-- Header and Mission Status Bar -->
+    <header class="w-full max-w-6xl flex justify-between items-center mb-8 p-4 bg-gray-800 rounded-xl shadow-lg">
+        <h1 class="text-4xl md:text-5xl font-extrabold header-gradient">
+            SABRINA
+        </h1>
+        <div id="mission-status-display" class="text-right">
+            <!-- Content updated by renderApp() -->
+        </div>
+    </header>
+
+    <!-- Main Application Container -->
+    <main id="app-container" class="w-full max-w-6xl flex flex-col items-center flex-grow">
+        <!-- Content injected by renderApp() function -->
+    </main>
+
+    <!-- AI Tutor Button (Hidden until a planet is selected) -->
+    <button id="ai-tutor-button" onclick="openAiTutor()"
+        class="fixed bottom-6 right-6 p-4 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold shadow-2xl transition duration-300 hidden z-50 transform hover:scale-105">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6">
+            <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/>
+            <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+            <line x1="12" x2="12" y1="19" y2="22"/>
+        </svg>
+    </button>
+
+    <!-- AI Tutor Modal (Hidden by default) -->
+    <div id="ai-tutor-modal" class="hidden fixed inset-0 z-40 bg-black bg-opacity-75 flex items-center justify-center p-4">
+        <div class="bg-gray-900 rounded-xl shadow-2xl w-full max-w-lg h-full max-h-[80vh] flex flex-col">
+            <!-- Modal Header -->
+            <div class="flex justify-between items-center p-4 border-b border-gray-700 bg-gray-800 rounded-t-xl">
+                <h2 class="text-2xl font-bold text-indigo-400">🤖 SABRINA: AI Mission Tutor</h2>
+                <button onclick="closeAiTutor()" class="text-gray-400 hover:text-white p-1 rounded-full hover:bg-gray-700">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+            
+            <!-- Chat Output Area -->
+            <div id="ai-tutor-output" class="flex-grow p-4 space-y-3 overflow-y-auto flex flex-col">
+                <div class="mb-2 p-3 rounded-lg bg-emerald-900/50 self-start max-w-xs md:max-w-md">
+                    🤖 SABRINA: Welcome! I'm your AI Mission Tutor. Ask me anything about gravity, propulsion, or the current phase of our mission!
+                </div>
+            </div>
+
+            <!-- Loading Indicator -->
+            <div id="ai-tutor-loading" class="text-center p-2 hidden">
+                <p class="text-indigo-400 animate-pulse">SABRINA is calculating... (Using Google Search for context)</p>
+            </div>
+
+            <!-- Input Area -->
+            <div class="p-4 border-t border-gray-700 flex gap-2">
+                <input type="text" id="ai-tutor-input" placeholder="Ask SABRINA a question..."
+                    class="flex-grow p-3 rounded-lg bg-gray-700 text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    onkeydown="if(event.key === 'Enter') handleAiQuery()">
+                <button onclick="handleAiQuery()"
+                    class="p-3 bg-indigo-600 hover:bg-indigo-700 rounded-lg text-white font-semibold transition duration-200">
+                    Send
+                </button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

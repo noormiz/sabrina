@@ -1,162 +1,228 @@
-# mission_core.py
+import random
+import copy # For deep copying the state history
 
-import numpy as np
-import random 
+# --- CONSTANTS AND PLANETARY DATA ---
+
+SIM_CONSTANTS = {
+    "G_EARTH": 9.81 * 0.001,        # Simplified gravity constant (km/s^2)
+    "FUEL_PER_DAY": 0.5,            # Routine fuel consumed per mission day
+    "CRUISE_STEP_DAYS": 10,         # How many days each "cruise step" represents
+    "ESCAPE_VELOCITY": 11.2,        # km/s (Simplified threshold)
+    "IMPACT_VELOCITY_MAX": 0.05,    # km/s maximum for a safe landing
+    "PLANET_GRAVITY_BASE": 0.0005,  # Base gravity constant
+    "FUEL_PER_SECOND_BURN": 1.5,
+    "DATA_COLLECTION_FUEL_COST": 50,
+    "REQUIRED_DATA_UNITS": 50,
+    "FUEL_FOR_RETURN_BURN": 100,
+}
+
+EXOPLANETS = {
+    "Aetheria": {
+        "name": "Aetheria", "type": "Frozen Moon", "distance": "15 Light Years",
+        "icon": "🚀", "bgColor": "bg-indigo-900", "focus": "Orbital Mechanics & Scale",
+        "simDistanceKm": 1500000000, "gravityFactor": 0.8, "atmosphereDrag": 0.1,
+    },
+    "TerraNova": {
+        "name": "Terra Nova", "type": "Rocky Super-Earth", "distance": "40 Light Years",
+        "icon": "🌋", "bgColor": "bg-red-900", "focus": "Gravity & Thrust",
+        "simDistanceKm": 4000000000, "gravityFactor": 2.5, "atmosphereDrag": 0.5,
+    },
+    "Kyperus": {
+        "name": "Kyperus", "type": "Ocean World", "distance": "22 Light Years",
+        "icon": "🌊", "bgColor": "bg-blue-900", "focus": "Atmosphere & Pressure",
+        "simDistanceKm": 2200000000, "gravityFactor": 1.2, "atmosphereDrag": 3.0,
+    }
+}
+
+# --- STATE CLASS ---
 
 class MissionState:
     """Tracks all the critical variables for the space mission."""
     def __init__(self):
-        # Mission Status
-        self.status = "PRE_LAUNCH"      # Current phase: PRE_LAUNCH, LAUNCH, CRUISE, LANDING, SUCCESS, FAILURE
-        self.error_code = None          # Stores a specific code like "LOW_FUEL" if failure occurs
+        self.status = "SELECTION"       # SELECTION, PRE_LAUNCH, CRUISING, LANDING_PREP, SURFACE_DATA, RETURN_PREP, SUCCESS, FAILURE
+        self.error_code = None          # Stores a specific error code
         self.mission_day = 0            # Tracks time/steps taken
 
-        # Vehicle Parameters (Simplified)
-        self.initial_fuel = 1000        # Max fuel units
-        self.fuel = self.initial_fuel   # Current fuel units
-        self.dry_mass = 500             # Mass of the rocket without fuel (kg)
-        self.current_mass = self.fuel + self.dry_mass # Total mass
+        self.initial_fuel = 1000
+        self.fuel = self.initial_fuel
+        self.dry_mass = 500             
+        self.current_mass = self.fuel + self.dry_mass
         
-        # Position & Velocity (Simplified for 2D, Step-based)
-        self.velocity_km_s = 0.0        # Current velocity (km/s)
-        self.altitude_km = 0.0          # Current altitude/distance from Earth (km)
-        self.target_distance_km = 400000 # Target planet distance (e.g., simplified Moon distance)
+        self.velocity_km_s = 0.0
+        self.altitude_km = 0.0
+        self.target_distance_km = 0
+        self.target_planet_key = None
+        self.target_planet_data = None  # Store the dict from EXOPLANETS
+        
+        self.collected_data_units = 0
+        self.required_data_units = SIM_CONSTANTS["REQUIRED_DATA_UNITS"]
+        
+        self._history = [] # For a potential undo/rewind feature
 
-        # Data Collection
-        self.collected_data_units = 0   # Data points gathered at the target
-        self.required_data_units = 50   # Goal for mission success
-        
     def get_current_state(self):
         """Returns a dictionary of current state for easy display/logging."""
-        # Convert the object's attributes to a dictionary
-        return self.__dict__
+        state = self.__dict__.copy()
+        state.pop('_history', None) 
+        state["fuel_display"] = f"{self.fuel:.1f}"
+        state["velocity_display"] = f"{self.velocity_km_s:.2f}"
+        return state
+
+    def update_mass(self):
+        """Recalculates current mass based on remaining fuel."""
+        self.current_mass = self.dry_mass + self.fuel
+
+    def set_target(self, planet_key):
+        """Sets the mission target and initial distance."""
+        self.target_planet_key = planet_key
+        self.target_planet_data = EXOPLANETS[planet_key]
+        self.target_distance_km = self.target_planet_data["simDistanceKm"]
+        self.status = "PRE_LAUNCH"
 
 
-# Simplified Constants
-G_EARTH = 9.81 * 0.001 # Simplified gravity constant (km/s^2)
-FUEL_BURN_RATE = 1     # Fuel consumed per unit of thrust
+# --- MISSION STEP FUNCTIONS ---
 
-def launch_step(state, thrust_percent):
+def _safe_action_wrapper(func):
+    """Decorator to clear error state before an action."""
+    def wrapper(state, *args, **kwargs):
+        state.error_code = None
+        return func(state, *args, **kwargs)
+    return wrapper
+
+@_safe_action_wrapper
+def launch_step(state, twr):
     """
-    Simulates the launch phase based on user-input thrust.
-    Thrust is a value from 0 to 100.
+    Simulates the launch phase based on user-input Thrust-to-Weight Ratio (TWR).
+    TWR is the raw value from the slider (e.g., 1.5).
     """
-    # 1. Input Validation
     if state.status != "PRE_LAUNCH":
         return "Not in the launch phase."
-        
-    if not 0 <= thrust_percent <= 100:
-        state.error_code = "INVALID_THRUST_INPUT"
-        state.status = "FAILURE"
-        return "Invalid input."
-
-    # 2. Calculate Fuel and Mass Changes
-    actual_thrust = thrust_percent * 1000 # Convert percent to an arbitrary thrust unit (Newtons)
-    fuel_consumed = thrust_percent * FUEL_BURN_RATE
     
-    # Check for failure BEFORE changing state (critical for AI feedback)
+    twr = float(twr)
+
+    # 1. TWR to Fuel Consumption mapping: 
+    # Use twr directly for consumption as a simple penalty mechanism
+    fuel_consumed = twr * 15 
+    thrust_percent = min(100, (twr - 1.0) * 40)
+    actual_thrust = thrust_percent * 50
+
+    # Check for failure BEFORE changing state
     if state.fuel < fuel_consumed:
         state.error_code = "LOW_FUEL_LAUNCH"
         state.status = "FAILURE"
         return "Launch aborted due to insufficient fuel."
         
-    # Apply changes if successful
+    if twr < 1.0:
+        state.error_code = "GRAVITY_FAIL"
+        state.status = "FAILURE"
+        return "Thrust too low. Gravity wins."
+
+    # Apply changes
     state.fuel -= fuel_consumed
-    state.current_mass = state.dry_mass + state.fuel
+    state.update_mass()
     
-    # 3. Apply Simplified Physics (Newton's 2nd Law: F_net = m * a)
-    # F_net = Thrust - Drag (simplified to a constant) - Gravity
-    # Acceleration = F_net / Mass
-    
-    # Simplified Net Force (Ignore drag for a quick hack)
-    net_force_N = actual_thrust - (state.current_mass * G_EARTH)
-    
-    # Acceleration
+    # 2. Apply Simplified Physics (similar to the JS version)
+    net_force_N = actual_thrust - (state.current_mass * SIM_CONSTANTS["G_EARTH"])
     acceleration_km_s2 = net_force_N / state.current_mass
     
-    # Apply change in velocity (assuming a fixed 10-second burn/step)
     BURN_TIME_S = 10
     state.velocity_km_s += acceleration_km_s2 * BURN_TIME_S
     
-    # Update position (simplified distance = velocity * time)
-    state.altitude_km += state.velocity_km_s * BURN_TIME_S
+    # Prevent crashing for simplicity, just check velocity
     state.mission_day += 1
 
-    # 4. Check for Stage Transition (did we reach orbit/escape velocity?)
-    ESCAPE_VELOCITY = 11.2 # km/s (Simplified threshold)
-    if state.velocity_km_s >= ESCAPE_VELOCITY:
-        state.status = "CRUISE"
+    # 3. Check for Stage Transition and Mission Constraint Failure
+    if state.velocity_km_s >= SIM_CONSTANTS["ESCAPE_VELOCITY"]:
+        state.status = "CRUISING"
+        # Apply initial distance bump to skip orbital mechanics
+        state.altitude_km = min(state.altitude_km, state.target_distance_km * 0.05) 
+        
+        # Check mission-specific constraints (Non-fatal warning logic)
+        if state.target_planet_key == 'TerraNova' and twr < 2.0:
+            state.error_code = "INEFFICIENT_TWR_HIGH_GRAV"
+            return "Launch successful, but inefficient. Check fuel reserves for high-gravity landing."
+        if state.target_planet_key == 'Aetheria' and (twr > 1.8 or twr < 1.2):
+            state.error_code = "INEFFICIENT_TWR_LONG_CRUISE"
+            return "Launch successful, but inefficient. You wasted fuel needed for the long cruise."
+
         return "Launch successful! Entering Cruise Phase."
     
-    # 5. Check for catastrophic failure (e.g., low thrust/gravity too strong)
-    if state.altitude_km < 0:
-         state.error_code = "GRAVITY_FAIL"
-         state.status = "FAILURE"
-         return "Failed to overcome gravity and crashed back to Earth."
-
     return "Launch in progress. Velocity updated."
 
 
-# mission_core.py (Continued)
-
-FUEL_PER_DAY = 0.5     # Fuel consumed per mission day for life support/minor corrections
-CRUISE_STEP_DAYS = 10  # How many days each "step" represents
-
-def cruise_step(state):
+@_safe_action_wrapper
+def cruise_step(state, burn_duration_s=0):
     """
-    Simulates a 10-day cruise step towards the target planet.
-    Checks for fuel, updates position, and checks for arrival.
+    Simulates a cruise step towards the target planet. Includes optional mid-course burn.
     """
-    # 1. Input Validation
-    if state.status != "CRUISE":
+    if state.status not in ["CRUISING", "FAILURE"]:
         return "Not currently in the cruise phase."
 
-    # 2. Calculate Fuel Consumption
-    fuel_consumed = CRUISE_STEP_DAYS * FUEL_PER_DAY
+    days = SIM_CONSTANTS["CRUISE_STEP_DAYS"]
+    burn_duration_s = int(burn_duration_s)
+
+    # 1. Mid-Course Correction Burn
+    if burn_duration_s > 0:
+        fuel_consumed_burn = burn_duration_s * SIM_CONSTANTS["FUEL_PER_SECOND_BURN"]
+        if state.fuel < fuel_consumed_burn:
+            state.error_code = "OUT_OF_FUEL_BURN"
+            state.status = "FAILURE" 
+            return "CRITICAL FAILURE: Ran out of fuel during mid-course correction."
+        
+        state.velocity_km_s += burn_duration_s * 0.1 # 1s burn = 0.1 km/s speed increase
+        state.fuel -= fuel_consumed_burn
+        state.update_mass()
     
-    # Check for failure (running out of fuel mid-cruise)
-    if state.fuel < fuel_consumed:
+    # 2. Routine Fuel Consumption
+    fuel_consumed_routine = days * SIM_CONSTANTS["FUEL_PER_DAY"]
+    if state.fuel < fuel_consumed_routine:
         state.error_code = "OUT_OF_FUEL_CRUISE"
-        state.status = "FAILURE"
+        state.status = "FAILURE" 
         return "CRITICAL FAILURE: Ran out of fuel mid-course. Vehicle is adrift."
         
-    # Apply changes
-    state.fuel -= fuel_consumed
-    state.mission_day += CRUISE_STEP_DAYS
-    state.current_mass = state.dry_mass + state.fuel # Mass slightly decreases
-
+    state.fuel -= fuel_consumed_routine
+    state.mission_day += days
+    state.update_mass()
+    
     # 3. Update Position
-    # Since velocity is constant (or nearly constant) in space, we use distance = speed * time
-    # This is highly simplified!
-    distance_traveled = state.velocity_km_s * (CRUISE_STEP_DAYS * 86400) # days to seconds
+    distance_traveled = state.velocity_km_s * (days * 3600)
     state.altitude_km += distance_traveled
     
-    # Check for Stage Transition (Did we arrive?)
+    # 4. Check for Arrival
     if state.altitude_km >= state.target_distance_km:
-        state.altitude_km = state.target_distance_km # Set exactly to target for cleaner transition
+        state.altitude_km = state.target_distance_km
         state.status = "LANDING_PREP"
+        state.velocity_km_s = max(0.5, state.velocity_km_s) # Set initial landing velocity
         return "Arrival at target planet! Preparing for landing sequence."
 
-    # 4. Success message for continuing the journey
     distance_remaining = state.target_distance_km - state.altitude_km
+    
+    # Check mission-specific constraints (Non-fatal warning logic)
+    if burn_duration_s > 0:
+        is_optimal = False
+        planet_key = state.target_planet_key
+        if planet_key == 'Aetheria' and 10 <= burn_duration_s <= 20: is_optimal = True
+        elif planet_key == 'Kyperus' and 20 <= burn_duration_s <= 30: is_optimal = True
+        elif planet_key == 'TerraNova' and 30 <= burn_duration_s <= 45: is_optimal = True
+
+        if not is_optimal:
+            state.error_code = "SUBOPTIMAL_BURN"
+            return f"Cruising... WARNING: Burn of {burn_duration_s}s was sub-optimal for {state.target_planet_data['name']}."
+
     return f"Cruising... Mission Day {state.mission_day}. Distance remaining: {distance_remaining:,.0f} km."
 
-    # mission_core.py (Continued)
-
-PLANET_GRAVITY = 0.0005 # Simplified gravity constant of the target planet
-IMPACT_VELOCITY_MAX = 0.05 # km/s maximum for a safe landing
-
+@_safe_action_wrapper
 def landing_step(state, retro_burn_duration_s):
     """
     Simulates the landing retro-burn based on user-input duration.
-    Retro-burn duration is in seconds.
     """
     if state.status != "LANDING_PREP":
         return "Not in the landing prep phase."
 
+    retro_burn_duration_s = int(retro_burn_duration_s)
+    planet_data = state.target_planet_data
+
     # 1. Calculate Fuel and Mass Changes
-    FUEL_PER_SECOND = 1.5 # Landing burns are high consumption
-    fuel_consumed = retro_burn_duration_s * FUEL_PER_SECOND
+    fuel_consumed = retro_burn_duration_s * SIM_CONSTANTS["FUEL_PER_SECOND_BURN"]
 
     if state.fuel < fuel_consumed:
         state.error_code = "LOW_FUEL_LANDING_CRASH"
@@ -164,82 +230,75 @@ def landing_step(state, retro_burn_duration_s):
         return "CRITICAL FAILURE: Ran out of fuel during retro-burn, leading to impact."
 
     state.fuel -= fuel_consumed
-    state.current_mass = state.dry_mass + state.fuel
+    state.update_mass()
     
     # 2. Apply Physics (Deceleration)
-    # Landing involves slowing down the current velocity (deceleration)
     
-    # Thrust Force is proportional to duration (simplified)
-    retro_thrust = retro_burn_duration_s * 500
-    
-    # Simplified Net Force (Ignore drag, just thrust vs. planet gravity)
-    net_force_N = retro_thrust - (state.current_mass * PLANET_GRAVITY)
-    
-    # Deceleration = F_net / Mass
-    deceleration_km_s = net_force_N / state.current_mass
-    
-    # Apply change to velocity (subtraction for deceleration)
-    state.velocity_km_s -= deceleration_km_s * 1 
-    # Use a fixed time step of 1s for the final moment
+    # Pull: Gravity is relative to the planet's factor
+    planet_gravity_pull = state.current_mass * SIM_CONSTANTS["PLANET_GRAVITY_BASE"] * planet_data["gravityFactor"]
 
+    # Push: Retro-thrust force is proportional to burn duration
+    retro_thrust = retro_burn_duration_s * 6000 
+    
+    # Drag: Atmospheric Drag is based on velocity and drag factor
+    drag_force = state.velocity_km_s * 5000 * planet_data["atmosphereDrag"] 
+
+    # Net Force = (Thrust + Drag) - Gravity. (Deceleration occurs if Net Force > 0 in this simplified model)
+    net_force_N = (retro_thrust + drag_force) - planet_gravity_pull
+    
+    deceleration_km_s2 = net_force_N / state.current_mass
+    
+    # Apply change to velocity
+    state.velocity_km_s -= deceleration_km_s2 * 1 
+    state.velocity_km_s = max(0, state.velocity_km_s) 
+    
     # 3. Check for Landing Success/Failure
-    if state.velocity_km_s <= IMPACT_VELOCITY_MAX and state.velocity_km_s >= 0:
+    if state.velocity_km_s <= SIM_CONSTANTS["IMPACT_VELOCITY_MAX"]:
         state.status = "SURFACE_DATA"
-        state.velocity_km_s = 0.0 # Stop movement for clean state
+        state.velocity_km_s = 0.0 
         return "Soft landing successful! Preparing to collect scientific data."
-    elif state.velocity_km_s < 0:
-        # User over-burned, or our calculation resulted in negative velocity (bad physics)
-        state.error_code = "OVER_BURN_FAILURE"
-        state.status = "FAILURE"
-        return "FAILURE: Retro-burn was too powerful, the vehicle was destroyed by excessive stress."
-    elif state.velocity_km_s > IMPACT_VELOCITY_MAX:
+    elif retro_burn_duration_s > 10 and deceleration_km_s2 < -0.5: # Simple check for excessive deceleration
+         state.error_code = "OVER_BURN_FAILURE"
+         state.status = "FAILURE"
+         return "FAILURE: Retro-burn was too powerful, vehicle destroyed by excessive stress."
+    elif state.velocity_km_s > SIM_CONSTANTS["IMPACT_VELOCITY_MAX"]:
         state.error_code = "HIGH_VELOCITY_IMPACT"
         state.status = "FAILURE"
         return "CATASTROPHIC FAILURE: Impacted the surface at high velocity."
 
-    return "Landing step incomplete (should not happen in this model)."
+    return "Landing in progress. Current velocity: {:.3f} km/s. IMPACT IMMINENT!".format(state.velocity_km_s)
 
-
-# (Continue to Step 7 below)
-# mission_core.py (Continued)
-
-DATA_COLLECTION_FUEL_COST = 50 # Fuel cost to keep systems running for data collection
-
+@_safe_action_wrapper
 def collect_data(state):
     """Simulates the collection of scientific data on the surface."""
     if state.status != "SURFACE_DATA":
         return "Not on the surface."
 
-    if state.fuel < DATA_COLLECTION_FUEL_COST:
+    if state.fuel < SIM_CONSTANTS["DATA_COLLECTION_FUEL_COST"]:
         state.error_code = "INSUFFICIENT_FUEL_DATA"
         state.status = "FAILURE"
         return "FAILURE: Insufficient power for data systems. Must abort mission."
         
-    # Success: Collect data and burn fuel
-    state.fuel -= DATA_COLLECTION_FUEL_COST
-    state.collected_data_units = state.required_data_units # Collect all needed data instantly
-    state.mission_day += 5 # Time taken to collect data
+    state.fuel -= SIM_CONSTANTS["DATA_COLLECTION_FUEL_COST"]
+    state.collected_data_units = state.required_data_units
+    state.mission_day += 5 
     state.status = "RETURN_PREP"
     
     return "Data collection complete! Preparing for launch back to Earth."
 
-    # mission_core.py (Continued)
-
+@_safe_action_wrapper
 def return_home(state):
-    """Final check to see if we can return home successfully."""
+    """Final check for a successful return home."""
     if state.status != "RETURN_PREP":
         return "Cannot initiate return home sequence."
         
-    # Check if we have enough fuel for the return burn (simplified)
-    FUEL_FOR_RETURN_BURN = 100 
-    if state.fuel < FUEL_FOR_RETURN_BURN:
+    if state.fuel < SIM_CONSTANTS["FUEL_FOR_RETURN_BURN"]:
         state.error_code = "STRANDED_NO_RETURN_FUEL"
         state.status = "FAILURE"
         return "FAILURE: Not enough fuel for the return burn. Crew is stranded."
 
-    # Final Success Check
     if state.collected_data_units >= state.required_data_units:
-        state.fuel -= FUEL_FOR_RETURN_BURN
+        state.fuel -= SIM_CONSTANTS["FUEL_FOR_RETURN_BURN"]
         state.status = "SUCCESS"
         return "Mission COMPLETE! Crew is on course for Earth return."
     else:
