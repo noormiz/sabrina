@@ -5,32 +5,37 @@ import copy # For deep copying the state history
 
 SIM_CONSTANTS = {
     "G_EARTH": 9.81 * 0.001,        # Simplified gravity constant (km/s^2)
-    "FUEL_PER_DAY": 0.5,            # Routine fuel consumed per mission day
+    "FUEL_PER_DAY": 2.0,            # Routine fuel consumed per mission day (increased for realism)
     "CRUISE_STEP_DAYS": 10,         # How many days each "cruise step" represents
-    "ESCAPE_VELOCITY": 11.2,        # km/s (Simplified threshold)
-    "IMPACT_VELOCITY_MAX": 0.05,    # km/s maximum for a safe landing
+    "ESCAPE_VELOCITY": 8.0,         # km/s (Lowered to make launch easier - still educational)
+    "IMPACT_VELOCITY_MAX": 0.1,     # km/s maximum for a safe landing (more forgiving)
     "PLANET_GRAVITY_BASE": 0.0005,  # Base gravity constant
-    "FUEL_PER_SECOND_BURN": 1.5,
-    "DATA_COLLECTION_FUEL_COST": 50,
+    "FUEL_PER_SECOND_BURN": 2.0,    # Fuel per second of burn (slightly higher)
+    "DATA_COLLECTION_FUEL_COST": 40, # Reduced for better balance
     "REQUIRED_DATA_UNITS": 50,
-    "FUEL_FOR_RETURN_BURN": 100,
+    "FUEL_FOR_RETURN_BURN": 80,     # Reduced for better balance
+    "LAUNCH_FUEL_BASE": 20,         # Base fuel cost for launch
+    "LAUNCH_FUEL_MULTIPLIER": 8,    # Multiplier for TWR (more intuitive)
 }
 
 EXOPLANETS = {
     "Aetheria": {
         "name": "Aetheria", "type": "Frozen Moon", "distance": "15 Light Years",
         "icon": "🚀", "bgColor": "bg-indigo-900", "focus": "Orbital Mechanics & Scale",
-        "simDistanceKm": 1500000000, "gravityFactor": 0.8, "atmosphereDrag": 0.1,
+        # Scaled down by 100 for gameplay: 1.5B km -> 15M km (takes ~2-3 steps at 8-10 km/s)
+        "simDistanceKm": 15000000, "gravityFactor": 0.8, "atmosphereDrag": 0.1,
     },
     "TerraNova": {
         "name": "Terra Nova", "type": "Rocky Super-Earth", "distance": "40 Light Years",
         "icon": "🌋", "bgColor": "bg-red-900", "focus": "Gravity & Thrust",
-        "simDistanceKm": 4000000000, "gravityFactor": 2.5, "atmosphereDrag": 0.5,
+        # Scaled down: 4B km -> 40M km (takes ~5-6 steps at 8-10 km/s)
+        "simDistanceKm": 40000000, "gravityFactor": 2.5, "atmosphereDrag": 0.5,
     },
     "Kyperus": {
         "name": "Kyperus", "type": "Ocean World", "distance": "22 Light Years",
         "icon": "🌊", "bgColor": "bg-blue-900", "focus": "Atmosphere & Pressure",
-        "simDistanceKm": 2200000000, "gravityFactor": 1.2, "atmosphereDrag": 3.0,
+        # Scaled down: 2.2B km -> 22M km (takes ~3-4 steps at 8-10 km/s)
+        "simDistanceKm": 22000000, "gravityFactor": 1.2, "atmosphereDrag": 3.0,
     }
 }
 
@@ -92,18 +97,17 @@ def _safe_action_wrapper(func):
 def launch_step(state, twr):
     """
     Simulates the launch phase based on user-input Thrust-to-Weight Ratio (TWR).
-    TWR is the raw value from the slider (e.g., 1.5).
+    Simplified and balanced for educational purposes.
     """
     if state.status != "PRE_LAUNCH":
         return "Not in the launch phase."
     
     twr = float(twr)
 
-    # 1. TWR to Fuel Consumption mapping: 
-    # Use twr directly for consumption as a simple penalty mechanism
-    fuel_consumed = twr * 15 
-    thrust_percent = min(100, (twr - 1.0) * 40)
-    actual_thrust = thrust_percent * 50
+    # 1. Simplified Fuel Consumption: Base cost + TWR multiplier
+    # More intuitive: Higher TWR = more fuel, but not too punishing
+    fuel_consumed = SIM_CONSTANTS["LAUNCH_FUEL_BASE"] + (twr - 1.0) * SIM_CONSTANTS["LAUNCH_FUEL_MULTIPLIER"]
+    fuel_consumed = max(20, fuel_consumed)  # Minimum 20 fuel
 
     # Check for failure BEFORE changing state
     if state.fuel < fuel_consumed:
@@ -114,53 +118,52 @@ def launch_step(state, twr):
     if twr < 1.0:
         state.error_code = "GRAVITY_FAIL"
         state.status = "FAILURE"
-        return "Thrust too low. Gravity wins."
+        return "Thrust too low. Gravity wins. TWR must be > 1.0 to lift off!"
 
     # Apply changes
     state.fuel -= fuel_consumed
     state.update_mass()
     
-    # 2. Apply Simplified Physics (similar to the JS version)
-    net_force_N = actual_thrust - (state.current_mass * SIM_CONSTANTS["G_EARTH"])
-    acceleration_km_s2 = net_force_N / state.current_mass
+    # 2. Simplified Physics: TWR directly affects velocity gain
+    # Increased base velocity to make cruise phase faster
+    base_velocity_gain = 8.0  # Base km/s gained from launch (increased from 5.0)
+    velocity_gain = base_velocity_gain * (twr - 0.3)  # TWR 1.0 = 0.7x, TWR 1.5 = 1.2x, TWR 2.0 = 1.7x
+    velocity_gain = max(5.0, velocity_gain)  # Minimum gain (increased from 2.0)
     
-    BURN_TIME_S = 10
-    state.velocity_km_s += acceleration_km_s2 * BURN_TIME_S
-    
-    # Prevent crashing for simplicity, just check velocity
+    state.velocity_km_s += velocity_gain
     state.mission_day += 1
 
-    # 3. Check for Stage Transition and Mission Constraint Failure
+    # 3. Check for Stage Transition
     if state.velocity_km_s >= SIM_CONSTANTS["ESCAPE_VELOCITY"]:
         state.status = "CRUISING"
-        # Apply initial distance bump to skip orbital mechanics
-        state.altitude_km = min(state.altitude_km, state.target_distance_km * 0.05) 
+        # Start at 2% of distance (small head start)
+        state.altitude_km = state.target_distance_km * 0.02
         
-        # Check mission-specific constraints (Non-fatal warning logic)
-        if state.target_planet_key == 'TerraNova' and twr < 2.0:
-            state.error_code = "INEFFICIENT_TWR_HIGH_GRAV"
-            return "Launch successful, but inefficient. Check fuel reserves for high-gravity landing."
-        if state.target_planet_key == 'Aetheria' and (twr > 1.8 or twr < 1.2):
-            state.error_code = "INEFFICIENT_TWR_LONG_CRUISE"
-            return "Launch successful, but inefficient. You wasted fuel needed for the long cruise."
+        # Success message with helpful feedback
+        if twr >= 1.2 and twr <= 1.8:
+            return "Launch successful! Efficient TWR choice. Entering Cruise Phase."
+        elif twr < 1.2:
+            return "Launch successful, but low TWR used extra fuel. Entering Cruise Phase."
+        else:
+            return "Launch successful! High TWR was fast but used more fuel. Entering Cruise Phase."
 
-        return "Launch successful! Entering Cruise Phase."
-    
-    return "Launch in progress. Velocity updated."
+    # Still building velocity
+    return f"Launch in progress. Current velocity: {state.velocity_km_s:.2f} km/s. Need {SIM_CONSTANTS['ESCAPE_VELOCITY']} km/s to escape."
 
 
 @_safe_action_wrapper
 def cruise_step(state, burn_duration_s=0):
     """
     Simulates a cruise step towards the target planet. Includes optional mid-course burn.
+    Balanced for educational success.
     """
-    if state.status not in ["CRUISING", "FAILURE"]:
+    if state.status != "CRUISING":
         return "Not currently in the cruise phase."
 
     days = SIM_CONSTANTS["CRUISE_STEP_DAYS"]
     burn_duration_s = int(burn_duration_s)
 
-    # 1. Mid-Course Correction Burn
+    # 1. Mid-Course Correction Burn (simplified and more effective)
     if burn_duration_s > 0:
         fuel_consumed_burn = burn_duration_s * SIM_CONSTANTS["FUEL_PER_SECOND_BURN"]
         if state.fuel < fuel_consumed_burn:
@@ -168,7 +171,10 @@ def cruise_step(state, burn_duration_s=0):
             state.status = "FAILURE" 
             return "CRITICAL FAILURE: Ran out of fuel during mid-course correction."
         
-        state.velocity_km_s += burn_duration_s * 0.1 # 1s burn = 0.1 km/s speed increase
+        # More intuitive: Each second of burn adds velocity
+        # Increased effectiveness to make burns more impactful
+        velocity_increase = burn_duration_s * 0.25  # Increased from 0.15 to 0.25 km/s per second
+        state.velocity_km_s += velocity_increase
         state.fuel -= fuel_consumed_burn
         state.update_mass()
     
@@ -183,37 +189,34 @@ def cruise_step(state, burn_duration_s=0):
     state.mission_day += days
     state.update_mass()
     
-    # 3. Update Position
-    distance_traveled = state.velocity_km_s * (days * 3600)
+    # 3. Update Position (simplified calculation)
+    # Distance = velocity * time
+    # Distances are already scaled down for gameplay (divided by 10,000)
+    seconds_in_step = days * 24 * 3600  # Convert days to seconds
+    distance_traveled = state.velocity_km_s * seconds_in_step  # km/s * s = km
     state.altitude_km += distance_traveled
     
     # 4. Check for Arrival
     if state.altitude_km >= state.target_distance_km:
         state.altitude_km = state.target_distance_km
         state.status = "LANDING_PREP"
-        state.velocity_km_s = max(0.5, state.velocity_km_s) # Set initial landing velocity
+        # Set reasonable landing velocity based on planet
+        planet_data = state.target_planet_data
+        # Higher gravity/atmosphere = higher approach velocity
+        base_velocity = 2.0 + (planet_data["gravityFactor"] * 0.5) + (planet_data["atmosphereDrag"] * 0.3)
+        state.velocity_km_s = min(base_velocity, state.velocity_km_s)  # Don't exceed current velocity
         return "Arrival at target planet! Preparing for landing sequence."
 
     distance_remaining = state.target_distance_km - state.altitude_km
+    progress_percent = (state.altitude_km / state.target_distance_km) * 100
     
-    # Check mission-specific constraints (Non-fatal warning logic)
-    if burn_duration_s > 0:
-        is_optimal = False
-        planet_key = state.target_planet_key
-        if planet_key == 'Aetheria' and 10 <= burn_duration_s <= 20: is_optimal = True
-        elif planet_key == 'Kyperus' and 20 <= burn_duration_s <= 30: is_optimal = True
-        elif planet_key == 'TerraNova' and 30 <= burn_duration_s <= 45: is_optimal = True
-
-        if not is_optimal:
-            state.error_code = "SUBOPTIMAL_BURN"
-            return f"Cruising... WARNING: Burn of {burn_duration_s}s was sub-optimal for {state.target_planet_data['name']}."
-
-    return f"Cruising... Mission Day {state.mission_day}. Distance remaining: {distance_remaining:,.0f} km."
+    return f"Cruising... Mission Day {state.mission_day}. Distance remaining: {distance_remaining:,.0f} km ({progress_percent:.1f}% complete)."
 
 @_safe_action_wrapper
 def landing_step(state, retro_burn_duration_s):
     """
     Simulates the landing retro-burn based on user-input duration.
+    Simplified and more predictable for educational purposes.
     """
     if state.status != "LANDING_PREP":
         return "Not in the landing prep phase."
@@ -221,7 +224,7 @@ def landing_step(state, retro_burn_duration_s):
     retro_burn_duration_s = int(retro_burn_duration_s)
     planet_data = state.target_planet_data
 
-    # 1. Calculate Fuel and Mass Changes
+    # 1. Calculate Fuel Consumption
     fuel_consumed = retro_burn_duration_s * SIM_CONSTANTS["FUEL_PER_SECOND_BURN"]
 
     if state.fuel < fuel_consumed:
@@ -232,41 +235,42 @@ def landing_step(state, retro_burn_duration_s):
     state.fuel -= fuel_consumed
     state.update_mass()
     
-    # 2. Apply Physics (Deceleration)
+    # 2. Simplified Physics: More intuitive velocity reduction
+    # Each second of burn reduces velocity by a predictable amount
+    base_deceleration = 0.4  # km/s per second of burn (more effective)
     
-    # Pull: Gravity is relative to the planet's factor
-    planet_gravity_pull = state.current_mass * SIM_CONSTANTS["PLANET_GRAVITY_BASE"] * planet_data["gravityFactor"]
-
-    # Push: Retro-thrust force is proportional to burn duration
-    retro_thrust = retro_burn_duration_s * 6000 
+    # Planet factors affect deceleration:
+    # - Higher gravity = harder to slow down (reduces deceleration)
+    # - Higher atmosphere = helps slow down (increases deceleration)
+    gravity_penalty = planet_data["gravityFactor"] * 0.1  # Higher gravity makes it harder
+    atmosphere_help = planet_data["atmosphereDrag"] * 0.05  # Atmosphere helps slow down
     
-    # Drag: Atmospheric Drag is based on velocity and drag factor
-    drag_force = state.velocity_km_s * 5000 * planet_data["atmosphereDrag"] 
-
-    # Net Force = (Thrust + Drag) - Gravity. (Deceleration occurs if Net Force > 0 in this simplified model)
-    net_force_N = (retro_thrust + drag_force) - planet_gravity_pull
+    effective_deceleration = base_deceleration - gravity_penalty + atmosphere_help
+    effective_deceleration = max(0.2, effective_deceleration)  # Minimum deceleration
     
-    deceleration_km_s2 = net_force_N / state.current_mass
+    # Total velocity reduction = burn duration * effective deceleration
+    velocity_reduction = retro_burn_duration_s * effective_deceleration
     
-    # Apply change to velocity
-    state.velocity_km_s -= deceleration_km_s2 * 1 
-    state.velocity_km_s = max(0, state.velocity_km_s) 
+    # Apply velocity reduction
+    state.velocity_km_s -= velocity_reduction
+    state.velocity_km_s = max(0, state.velocity_km_s)  # Can't go negative
     
     # 3. Check for Landing Success/Failure
     if state.velocity_km_s <= SIM_CONSTANTS["IMPACT_VELOCITY_MAX"]:
         state.status = "SURFACE_DATA"
         state.velocity_km_s = 0.0 
         return "Soft landing successful! Preparing to collect scientific data."
-    elif retro_burn_duration_s > 10 and deceleration_km_s2 < -0.5: # Simple check for excessive deceleration
-         state.error_code = "OVER_BURN_FAILURE"
-         state.status = "FAILURE"
-         return "FAILURE: Retro-burn was too powerful, vehicle destroyed by excessive stress."
     elif state.velocity_km_s > SIM_CONSTANTS["IMPACT_VELOCITY_MAX"]:
+        # Give helpful feedback
+        velocity_needed = state.velocity_km_s - SIM_CONSTANTS["IMPACT_VELOCITY_MAX"]
+        additional_burn_needed = int(velocity_needed / effective_deceleration) + 1
+        
         state.error_code = "HIGH_VELOCITY_IMPACT"
         state.status = "FAILURE"
-        return "CATASTROPHIC FAILURE: Impacted the surface at high velocity."
+        return f"CATASTROPHIC FAILURE: Impacted at {state.velocity_km_s:.2f} km/s. Need ~{additional_burn_needed} more seconds of retro-burn for safe landing."
 
-    return "Landing in progress. Current velocity: {:.3f} km/s. IMPACT IMMINENT!".format(state.velocity_km_s)
+    # Still descending
+    return f"Landing in progress. Velocity: {state.velocity_km_s:.2f} km/s. Need < {SIM_CONSTANTS['IMPACT_VELOCITY_MAX']} km/s for safe landing."
 
 @_safe_action_wrapper
 def collect_data(state):

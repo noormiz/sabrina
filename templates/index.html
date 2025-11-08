@@ -3,48 +3,2057 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sabrina: Exoplanet Mission</title>
-    <!-- Load Tailwind CSS -->
+    <title>🚀 SABRINA - Space Mission Simulator</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Use Inter font -->
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #0d1117; /* Dark space background */
-            color: #e6e6e6;
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Fredoka:wght@400;500;600;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-thumb { background: #5a67d8; border-radius: 10px; }
-        ::-webkit-scrollbar-track { background: #161b22; }
-        .header-gradient {
-            background-image: linear-gradient(to right, #6366f1, #3b82f6);
+
+        body {
+            font-family: 'Fredoka', sans-serif;
+            background: linear-gradient(135deg, #0a0e27 0%, #1a1a3e 30%, #2d1b4e 60%, #1a1a3e 100%);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+            color: #ffffff;
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        /* Animated Starfield */
+        .stars {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            overflow: hidden;
+        }
+
+        .star {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            animation: twinkle 3s infinite;
+        }
+
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.2; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.2); }
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 1800px;
+            margin: 0 auto;
+            padding: 15px;
+            min-height: calc(100vh - 20px);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .container.dashboard-mode {
+            height: calc(100vh - 20px);
+        }
+        
+        /* Dashboard Layout */
+        .dashboard-container {
+            display: grid;
+            grid-template-columns: 300px 1fr 350px;
+            gap: 20px;
+            flex: 1;
+            overflow: hidden;
+            min-height: 0;
+        }
+        
+        @media (max-width: 1400px) {
+            .dashboard-container {
+                grid-template-columns: 280px 1fr 320px;
+            }
+        }
+        
+        @media (max-width: 1200px) {
+            .dashboard-container {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto auto auto;
+            }
+        }
+        
+        .dashboard-panel {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(15px);
+            border-radius: 15px;
+            padding: 20px;
+            border: 2px solid rgba(100, 200, 255, 0.3);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+        
+        .dashboard-panel::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .dashboard-panel::-webkit-scrollbar-thumb {
+            background: rgba(100, 255, 218, 0.5);
+            border-radius: 10px;
+        }
+        
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            min-height: 0;
+        }
+
+        /* Header with Glow Effect - Compact */
+        .header {
+            text-align: center;
+            padding: 15px 20px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 15px;
+            margin-bottom: 15px;
+            border: 2px solid rgba(100, 200, 255, 0.4);
+            box-shadow: 0 5px 20px rgba(100, 255, 218, 0.3);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+        
+        .header-content {
+            flex: 1;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 5px;
+        }
+        
+        .header .subtitle {
+            font-size: 1em;
+            margin-top: 5px;
+        }
+        
+        .header-info {
+            text-align: right;
+            font-size: 0.9em;
+            color: #64ffda;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 10px 40px rgba(100, 255, 218, 0.3), inset 0 0 30px rgba(100, 255, 218, 0.1); }
+            50% { box-shadow: 0 10px 50px rgba(100, 255, 218, 0.5), inset 0 0 40px rgba(100, 255, 218, 0.2); }
+        }
+
+        h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 3.5em;
+            font-weight: 900;
+            background: linear-gradient(45deg, #ff6b9d, #c44569, #f8b500, #ff6b9d);
+            background-size: 200% 200%;
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            text-fill-color: transparent;
+            animation: gradientMove 3s ease infinite;
+            text-shadow: 0 0 40px rgba(255, 107, 157, 0.5);
+            margin-bottom: 10px;
         }
-        .card-glow {
-            box-shadow: 0 0 15px rgba(99, 102, 241, 0.4);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
+
+        @keyframes gradientMove {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
         }
-        .card-glow:hover {
-            box-shadow: 0 0 30px rgba(59, 130, 246, 0.8);
-            transform: translateY(-5px);
+
+        .subtitle {
+            font-size: 1.4em;
+            color: #64ffda;
+            margin-top: 10px;
+            text-shadow: 0 0 20px rgba(100, 255, 218, 0.8);
+        }
+
+        /* Status Cards - Compact */
+        .status-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(15px);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border: 2px solid rgba(100, 200, 255, 0.3);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+            animation: fadeIn 0.6s ease-out;
+            transition: all 0.3s;
+        }
+
+        .status-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 30px rgba(100, 255, 218, 0.4);
+        }
+        
+        /* Compact Metrics */
+        .metrics-compact {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin: 15px 0;
+        }
+        
+        .metric-card-compact {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 15px;
+            border-radius: 12px;
+            text-align: center;
+            border: 2px solid rgba(100, 200, 255, 0.2);
+            transition: all 0.3s;
+        }
+        
+        .metric-card-compact:hover {
+            background: rgba(0, 0, 0, 0.6);
+            border-color: rgba(100, 255, 218, 0.5);
+            transform: scale(1.05);
+        }
+        
+        .metric-label-compact {
+            font-size: 0.85em;
+            color: #64ffda;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .metric-value-compact {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #ffffff;
+        }
+        
+        /* Compact Progress Bars */
+        .progress-container-compact {
+            margin: 12px 0;
+        }
+        
+        .progress-label-compact {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 6px;
+            font-size: 0.85em;
+            color: #64ffda;
+        }
+        
+        .progress-bar-compact {
+            height: 20px;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 2px solid rgba(100, 200, 255, 0.3);
+        }
+        
+        .progress-fill-compact {
+            height: 100%;
+            background: linear-gradient(90deg, #ff6b9d, #c44569, #f8b500, #00e676, #00bcd4);
+            background-size: 200% 100%;
+            border-radius: 12px;
+            transition: width 1s ease-out;
+            animation: progressShine 2s infinite;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 12px 30px;
+            border-radius: 30px;
+            font-weight: bold;
+            font-size: 1.3em;
+            margin-bottom: 20px;
+            animation: pulse 2s infinite, bounce 1s ease-in-out infinite;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+
+        .status-success {
+            background: linear-gradient(135deg, #00e676, #00bcd4, #00e676);
+            background-size: 200% 200%;
+            animation: gradientMove 2s ease infinite, pulse 2s infinite;
+            color: white;
+            box-shadow: 0 0 30px rgba(0, 230, 118, 0.6);
+        }
+
+        .status-failure {
+            background: linear-gradient(135deg, #ff1744, #f50057, #ff1744);
+            background-size: 200% 200%;
+            animation: gradientMove 2s ease infinite, shake 0.5s;
+            color: white;
+            box-shadow: 0 0 30px rgba(255, 23, 68, 0.6);
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        .status-active {
+            background: linear-gradient(135deg, #ff6f00, #ffa726, #ff6f00);
+            background-size: 200% 200%;
+            animation: gradientMove 2s ease infinite;
+            color: white;
+            box-shadow: 0 0 30px rgba(255, 111, 0, 0.6);
+        }
+
+        /* Metrics Grid */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .metric-card {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            border: 2px solid rgba(100, 200, 255, 0.3);
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(100, 255, 218, 0.1), transparent);
+            animation: rotate 3s linear infinite;
+        }
+
+        @keyframes rotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .metric-card:hover {
+            background: rgba(0, 0, 0, 0.6);
+            border-color: rgba(100, 255, 218, 0.6);
+            transform: scale(1.1) rotate(2deg);
+            box-shadow: 0 10px 30px rgba(100, 255, 218, 0.4);
+        }
+
+        .metric-label {
+            font-size: 1em;
+            color: #64ffda;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: 600;
+            position: relative;
+            z-index: 1;
+        }
+
+        .metric-value {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2.2em;
+            font-weight: bold;
+            color: #ffffff;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+            position: relative;
+            z-index: 1;
+        }
+
+        .metric-unit {
+            font-size: 0.6em;
+            color: #b0bec5;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Progress Bars */
+        .progress-container {
+            margin: 20px 0;
+        }
+
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 1em;
+            color: #64ffda;
+            font-weight: 600;
+        }
+
+        .progress-bar {
+            height: 30px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 20px;
+            overflow: hidden;
+            border: 3px solid rgba(100, 200, 255, 0.4);
+            position: relative;
+            box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.5);
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff6b9d, #c44569, #f8b500, #00e676, #00bcd4);
+            background-size: 200% 100%;
+            border-radius: 20px;
+            transition: width 1s ease-out;
+            position: relative;
+            overflow: hidden;
+            animation: progressShine 2s infinite;
+        }
+
+        @keyframes progressShine {
+            0% { background-position: 0% 0%; }
+            100% { background-position: 200% 0%; }
+        }
+
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            right: 0;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        /* Rocket Animation - Compact */
+        .rocket-container {
+            text-align: center;
+            margin: 20px 0;
+            height: 120px;
+            position: relative;
+        }
+
+        .rocket {
+            font-size: 3.5em;
+            animation: float 3s ease-in-out infinite;
+            filter: drop-shadow(0 0 20px rgba(100, 255, 218, 0.8));
+            position: relative;
+            z-index: 1;
+        }
+        
+        /* Side Panel Styles */
+        .side-panel-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.3em;
+            color: #64ffda;
+            margin-bottom: 15px;
+            text-align: center;
+            text-shadow: 0 0 15px rgba(100, 255, 218, 0.6);
+            border-bottom: 2px solid rgba(100, 255, 218, 0.3);
+            padding-bottom: 10px;
+        }
+        
+        /* Selection screen stays full width */
+        .selection-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .selection-container .status-card {
+            max-width: 100%;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg) scale(1); }
+            50% { transform: translateY(-25px) rotate(5deg) scale(1.1); }
+        }
+
+        .rocket-launching {
+            animation: launch 2s ease-out forwards;
+        }
+
+        @keyframes launch {
+            0% { transform: translateY(0) scale(1); opacity: 1; }
+            100% { transform: translateY(-300px) scale(0.3); opacity: 0; }
+        }
+
+        /* Control Panel - Compact */
+        .control-panel {
+            background: rgba(255, 255, 255, 0.12);
+            backdrop-filter: blur(15px);
+            border-radius: 15px;
+            padding: 25px;
+            border: 2px solid rgba(100, 200, 255, 0.4);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.4);
+            animation: fadeIn 0.8s ease-out;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+        
+        .control-panel-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .control-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.8em;
+            margin-bottom: 15px;
+            color: #64ffda;
+            text-align: center;
+            text-shadow: 0 0 20px rgba(100, 255, 218, 0.8);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+            color: #b0bec5;
+            font-weight: 500;
+        }
+
+        input[type="number"],
+        input[type="range"] {
+            width: 100%;
+            padding: 15px;
+            font-size: 1.3em;
+            background: rgba(0, 0, 0, 0.5);
+            border: 3px solid rgba(100, 200, 255, 0.4);
+            border-radius: 15px;
+            color: #ffffff;
+            font-family: 'Orbitron', sans-serif;
+            transition: all 0.3s;
+        }
+
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            height: 12px;
+            background: linear-gradient(90deg, #ff6b9d, #f8b500, #00e676);
+            border-radius: 10px;
+            outline: none;
+            padding: 0;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 30px;
+            height: 30px;
+            background: linear-gradient(135deg, #64ffda, #00bcd4);
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 20px rgba(100, 255, 218, 0.8);
+            transition: all 0.3s;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.3);
+            box-shadow: 0 0 30px rgba(100, 255, 218, 1);
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 30px;
+            height: 30px;
+            background: linear-gradient(135deg, #64ffda, #00bcd4);
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 20px rgba(100, 255, 218, 0.8);
+            border: none;
+        }
+
+        input[type="number"]:focus,
+        input[type="range"]:focus {
+            outline: none;
+            border-color: #64ffda;
+            box-shadow: 0 0 30px rgba(100, 255, 218, 0.5);
+            background: rgba(0, 0, 0, 0.7);
+        }
+
+        .input-hint {
+            font-size: 1em;
+            color: #64ffda;
+            margin-top: 10px;
+            font-style: italic;
+            text-shadow: 0 0 10px rgba(100, 255, 218, 0.5);
+        }
+
+        /* Buttons - Compact */
+        .btn {
+            width: 100%;
+            padding: 15px 30px;
+            font-size: 1.2em;
+            font-family: 'Fredoka', sans-serif;
+            font-weight: bold;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            background: linear-gradient(135deg, #ff6b9d, #c44569, #f8b500);
+            background-size: 200% 200%;
+            color: white;
+            transition: all 0.3s;
+            box-shadow: 0 5px 20px rgba(255, 107, 157, 0.4);
+            position: relative;
+            overflow: hidden;
+            animation: gradientMove 3s ease infinite;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            margin-top: auto;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .btn:hover::before {
+            width: 400px;
+            height: 400px;
+        }
+
+        .btn:hover {
+            transform: translateY(-5px) scale(1.05);
+            box-shadow: 0 12px 35px rgba(255, 107, 157, 0.6);
+        }
+
+        .btn:active {
+            transform: translateY(-2px) scale(1.02);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #00e676, #00bcd4);
+            box-shadow: 0 8px 25px rgba(0, 230, 118, 0.4);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ff1744, #f50057);
+            box-shadow: 0 8px 25px rgba(255, 23, 68, 0.4);
+        }
+
+        .btn span {
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Alert Messages - Compact */
+        .alert {
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            animation: slideIn 0.5s ease-out;
+            border: 2px solid;
+            font-size: 0.95em;
+        }
+        
+        .alert p {
+            margin: 8px 0;
+            line-height: 1.5;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-40px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .alert-success {
+            background: rgba(0, 230, 118, 0.3);
+            border-color: rgba(0, 230, 118, 0.6);
+            color: #00e676;
+            box-shadow: 0 0 30px rgba(0, 230, 118, 0.4);
+        }
+
+        .alert-danger {
+            background: rgba(255, 23, 68, 0.3);
+            border-color: rgba(255, 23, 68, 0.6);
+            color: #ff6b9d;
+            box-shadow: 0 0 30px rgba(255, 23, 68, 0.4);
+        }
+
+        .alert-info {
+            background: rgba(100, 255, 218, 0.3);
+            border-color: rgba(100, 255, 218, 0.6);
+            color: #64ffda;
+            box-shadow: 0 0 30px rgba(100, 255, 218, 0.4);
+        }
+
+        /* Planet Cards */
+        .planet-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            border: 3px solid rgba(100, 200, 255, 0.3);
+            transition: all 0.4s;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .planet-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(100, 255, 218, 0.1), transparent);
+            animation: rotate 4s linear infinite;
+        }
+
+        .planet-card:hover {
+            transform: translateY(-15px) scale(1.08) rotate(3deg);
+            border-color: rgba(100, 255, 218, 0.8);
+            box-shadow: 0 20px 60px rgba(100, 255, 218, 0.7), 0 0 40px rgba(248, 181, 0, 0.4);
+        }
+        
+        .planet-card:hover .planet-icon {
+            transform: scale(1.2) rotate(15deg);
+            filter: drop-shadow(0 0 30px rgba(255, 255, 255, 0.8));
+        }
+
+        .planet-icon {
+            font-size: 5em;
+            margin: 20px 0;
+            animation: float 4s ease-in-out infinite;
+            filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.5));
+            transition: all 0.4s ease;
+        }
+        
+        .planet-card:hover .launch-button {
+            transform: scale(1.1);
+            box-shadow: 0 12px 35px rgba(0, 230, 118, 0.7);
+            background: linear-gradient(135deg, #00bcd4, #00e676);
+        }
+        
+        .launch-button::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+        
+        .planet-card:hover .launch-button::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        /* Distance Visualization */
+        .distance-visual {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin: 30px 0;
+            padding: 30px;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 20px;
+            border: 2px solid rgba(100, 200, 255, 0.3);
+        }
+
+        .planet-visual {
+            font-size: 4em;
+            animation: rotate 20s linear infinite;
+            filter: drop-shadow(0 0 30px rgba(255, 255, 255, 0.6));
+        }
+
+        .path {
+            flex: 1;
+            height: 6px;
+            background: linear-gradient(90deg, #64ffda, transparent, #64ffda);
+            margin: 0 30px;
+            position: relative;
+            border-radius: 10px;
+        }
+
+        .rocket-position {
+            position: absolute;
+            left: var(--progress, 0%);
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 2.5em;
+            transition: left 1s ease-out;
+            filter: drop-shadow(0 0 20px rgba(100, 255, 218, 0.8));
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.5em;
+            }
+            
+            .metrics-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .control-panel {
+                padding: 25px;
+            }
+        }
+
+        /* Celebration Animation */
+        @keyframes confetti {
+            0% {
+                transform: translateY(0) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(500px) rotate(720deg);
+                opacity: 0;
+            }
+        }
+
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            background: #ff6b9d;
+            animation: confetti 3s ease-out forwards;
+            z-index: 1000;
+        }
+
+        /* AI Tutor Button */
+        .ai-tutor-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            font-size: 2em;
+            cursor: pointer;
+            box-shadow: 0 10px 30px rgba(99, 102, 241, 0.5);
+            transition: all 0.3s;
+            z-index: 100;
+            animation: pulse 2s infinite;
+        }
+
+        .ai-tutor-btn:hover {
+            transform: scale(1.2) rotate(10deg);
+            box-shadow: 0 15px 40px rgba(99, 102, 241, 0.8);
+        }
+        
+        /* Educational Tooltips */
+        .tooltip-trigger {
+            position: relative;
+            cursor: help;
+            border-bottom: 2px dotted #64ffda;
+            display: inline-block;
+        }
+        
+        .tooltip {
+            position: absolute;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.95);
+            color: #64ffda;
+            padding: 15px 20px;
+            border-radius: 10px;
+            border: 2px solid #64ffda;
+            width: 300px;
+            font-size: 0.9em;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+            box-shadow: 0 10px 30px rgba(100, 255, 218, 0.5);
+        }
+        
+        .tooltip-trigger:hover .tooltip {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        
+        .tooltip::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 8px solid transparent;
+            border-top-color: #64ffda;
+        }
+        
+        /* Learn More Sections */
+        .learn-more {
+            margin-top: 15px;
+            padding: 15px;
+            background: rgba(100, 255, 218, 0.1);
+            border-radius: 10px;
+            border: 2px solid rgba(100, 255, 218, 0.3);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .learn-more:hover {
+            background: rgba(100, 255, 218, 0.2);
+            border-color: rgba(100, 255, 218, 0.5);
+        }
+        
+        .learn-more-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s ease-out;
+            margin-top: 10px;
+        }
+        
+        .learn-more.expanded .learn-more-content {
+            max-height: 1000px;
+        }
+        
+        /* Step Indicator */
+        .step-indicator {
+            display: flex;
+            justify-content: space-between;
+            margin: 20px 0;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+        }
+        
+        .step {
+            flex: 1;
+            text-align: center;
+            padding: 10px;
+            position: relative;
+        }
+        
+        .step::after {
+            content: '→';
+            position: absolute;
+            right: -15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #64ffda;
+            font-size: 1.5em;
+        }
+        
+        .step:last-child::after {
+            display: none;
+        }
+        
+        .step-number {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(100, 255, 218, 0.2);
+            border: 2px solid #64ffda;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 10px;
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+        
+        .step.active .step-number {
+            background: linear-gradient(135deg, #64ffda, #00bcd4);
+            color: #000;
+            box-shadow: 0 0 20px rgba(100, 255, 218, 0.6);
+            animation: pulse 2s infinite;
+        }
+        
+        .step.completed .step-number {
+            background: linear-gradient(135deg, #00e676, #00bcd4);
+            color: #000;
+        }
+        
+        /* Help Button */
+        .help-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            background: rgba(100, 255, 218, 0.2);
+            border: 2px solid #64ffda;
+            color: #64ffda;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            font-size: 1.2em;
+        }
+        
+        .help-btn:hover {
+            background: rgba(100, 255, 218, 0.4);
+            transform: scale(1.1);
+        }
+        
+        /* Educational Card */
+        .edu-card {
+            background: rgba(100, 255, 218, 0.1);
+            border: 2px solid rgba(100, 255, 218, 0.3);
+            border-radius: 12px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        
+        .edu-card-title {
+            color: #64ffda;
+            font-weight: bold;
+            font-size: 1.1em;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .edu-card-content {
+            color: #b0bec5;
+            line-height: 1.6;
+            font-size: 0.95em;
+        }
+        
+        /* Concept Explanation Box */
+        .concept-box {
+            background: rgba(248, 181, 0, 0.1);
+            border-left: 4px solid #f8b500;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 8px;
+        }
+        
+        .concept-box-title {
+            color: #f8b500;
+            font-weight: bold;
+            margin-bottom: 8px;
+            font-size: 1.1em;
+        }
+        
+        .concept-box-content {
+            color: #ffffff;
+            line-height: 1.6;
         }
     </style>
 </head>
-<body class="min-h-screen p-4 md:p-8 flex flex-col items-center">
+<body>
+    <!-- Animated Starfield -->
+    <div class="stars" id="stars"></div>
 
-    <!-- Client-Side AI Tutor Logic (Stays in JS) -->
+    <div class="container{% if state.status != 'SELECTION' and state.status != 'SUCCESS' and state.status != 'FAILURE' %} dashboard-mode{% endif %}">
+        <!-- Header -->
+        <div class="header">
+            <div class="header-content">
+                <h1>🚀 SABRINA 🚀</h1>
+                <p class="subtitle">Space Mission Simulator for Future Astronauts!</p>
+            </div>
+            {% if state.status != 'SELECTION' and state.target_planet_data %}
+            <div class="header-info">
+                <div>🌍 {{ state.target_planet_data.name }}</div>
+                <div>Day: {{ state.mission_day }} | Fuel: {{ state.fuel | round(0) | int }}/{{ state.initial_fuel }}</div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Success/Failure Screens (Full Width) -->
+        {% if state.status == 'SUCCESS' %}
+        <div class="status-card">
+            <div class="status-badge status-success">🎉 MISSION COMPLETE! 🎉</div>
+            <div class="alert alert-success">
+                <h2 style="margin-bottom: 15px; font-size: 1.5em;">🌟 Awesome Job, Space Commander! 🌟</h2>
+                <p style="font-size: 1.1em; line-height: 1.6;">
+                    You successfully collected <strong>{{ state.collected_data_units }} units</strong> of valuable scientific data and returned home safely! 
+                    Your mission planning and execution were outstanding! 🚀✨
+                </p>
+                <div style="text-align: center; margin-top: 20px;">
+                    <a href="{{ url_for('reset_mission') }}" class="btn btn-success" style="text-decoration: none; display: inline-block; max-width: 400px;">
+                        <span>🚀 Launch Another Mission!</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        {% elif state.status == 'FAILURE' %}
+        <div class="status-card">
+            <div class="status-badge status-failure">🚨 Mission Challenge 🚨</div>
+            <div class="alert alert-danger">
+                <h2 style="margin-bottom: 15px; font-size: 1.5em;">Mission Day {{ state.mission_day }}</h2>
+                <p style="font-size: 1.1em; margin-bottom: 10px;"><strong>Challenge:</strong> {{ state.error_code }}</p>
+                <p style="font-size: 1em; line-height: 1.6;">
+                    Don't worry! Every great astronaut learns from challenges! 🌟 
+                    Click the AI tutor button to learn what happened and how to improve next time!
+                </p>
+                <div style="text-align: center; margin-top: 20px;">
+                    <a href="{{ url_for('reset_mission') }}" class="btn btn-danger" style="text-decoration: none; display: inline-block; max-width: 400px;">
+                        <span>🔄 Start New Mission!</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard Layout for Active Mission -->
+        {% elif state.status != 'SELECTION' %}
+        <div class="dashboard-container">
+            <!-- Left Panel: Mission Status & Metrics -->
+            <div class="dashboard-panel">
+                <div class="side-panel-title">
+                    {% if state.status == 'PRE_LAUNCH' %}🚀 Ready for Launch
+                    {% elif state.status == 'CRUISING' %}🌌 Deep Space Cruise
+                    {% elif state.status == 'LANDING_PREP' %}🪐 Landing Approach
+                    {% elif state.status == 'SURFACE_DATA' %}🔬 Collecting Data
+                    {% elif state.status == 'RETURN_PREP' %}🏠 Returning Home
+                    {% else %}{{ state.status }}
+                    {% endif %}
+                </div>
+                
+                <div class="metrics-compact">
+                    <div class="metric-card-compact">
+                        <div class="metric-label-compact">⏱️ Mission Day</div>
+                        <div class="metric-value-compact">{{ state.mission_day }}</div>
+                    </div>
+                    <div class="metric-card-compact">
+                        <div class="metric-label-compact">📡 Altitude</div>
+                        <div class="metric-value-compact">{{ state.altitude_km | round(0) | int }}</div>
+                    </div>
+                    <div class="metric-card-compact">
+                        <div class="metric-label-compact">⚡ Velocity</div>
+                        <div class="metric-value-compact">{{ state.velocity_km_s | round(2) }}</div>
+                    </div>
+                    <div class="metric-card-compact">
+                        <div class="metric-label-compact">🔬 Data</div>
+                        <div class="metric-value-compact">{{ state.collected_data_units }}/{{ state.required_data_units }}</div>
+                    </div>
+                </div>
+
+                <!-- Rocket Animation -->
+                <div class="rocket-container">
+                    <div class="rocket" id="rocket">
+                        {% if state.status == 'PRE_LAUNCH' %}🚀
+                        {% elif state.status == 'CRUISING' %}🛸
+                        {% elif state.status == 'LANDING_PREP' %}🛸
+                        {% elif state.status == 'SURFACE_DATA' %}🔬
+                        {% elif state.status == 'RETURN_PREP' %}🚀
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Center Panel: Control Panel -->
+            <div class="dashboard-panel main-content" style="position: relative;">
+                {% if state.status == 'PRE_LAUNCH' %}
+                <button class="help-btn" onclick="openAiTutor('What is Thrust-to-Weight Ratio (TWR) and why is it important for launching a rocket?')" title="Get Help">?</button>
+                <div class="control-panel-content">
+                    <h2 class="control-title">🚀 Phase 1: Launch Sequence</h2>
+                    
+                    <!-- Step Indicator -->
+                    <div class="step-indicator">
+                        <div class="step active">
+                            <div class="step-number">1</div>
+                            <div style="font-size: 0.85em; color: #64ffda;">Launch</div>
+                        </div>
+                        <div class="step">
+                            <div class="step-number">2</div>
+                            <div style="font-size: 0.85em; color: #b0bec5;">Cruise</div>
+                        </div>
+                        <div class="step">
+                            <div class="step-number">3</div>
+                            <div style="font-size: 0.85em; color: #b0bec5;">Land</div>
+                        </div>
+                        <div class="step">
+                            <div class="step-number">4</div>
+                            <div style="font-size: 0.85em; color: #b0bec5;">Collect</div>
+                        </div>
+                        <div class="step">
+                            <div class="step-number">5</div>
+                            <div style="font-size: 0.85em; color: #b0bec5;">Return</div>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <strong>🎓 Mission Briefing:</strong> 
+                        <p style="margin-top: 8px;">
+                            Your mission is to launch a spacecraft from Earth to <strong>{{ state.target_planet_data.name }}</strong>! 
+                            To escape Earth's gravity, you need to set your <span class="tooltip-trigger">Thrust-to-Weight Ratio (TWR)<span class="tooltip">
+                                <strong>What is TWR?</strong><br><br>
+                                TWR compares your rocket's thrust (upward force) to its weight (downward force from gravity). 
+                                If TWR = 1.0, thrust equals weight (hovering). 
+                                If TWR > 1.0, you accelerate upward! 🚀<br><br>
+                                <strong>Example:</strong> If your rocket weighs 1000 kg and produces 1500 kg of thrust, TWR = 1.5!
+                            </span></span>.
+                        </p>
+                        <p style="margin-top: 8px; font-weight: bold; color: #f8b500;">
+                            ⚠️ TWR must be greater than 1.0 to lift off! Lower values waste fuel, higher values use fuel quickly.
+                        </p>
+                    </div>
+                    
+                    <!-- Educational Concept Box -->
+                    <div class="concept-box">
+                        <div class="concept-box-title">🧠 Science Concept: Newton's Laws</div>
+                        <div class="concept-box-content">
+                            <strong>Newton's 2nd Law:</strong> Force = Mass × Acceleration<br>
+                            Your rocket needs enough force (thrust) to overcome Earth's gravity (9.8 m/s²). 
+                            The TWR tells you if you have enough power! Higher TWR = faster acceleration, but more fuel used.
+                        </div>
+                    </div>
+                    
+                    <form method="POST" action="{{ url_for('launch') }}" style="display: flex; flex-direction: column; flex: 1;">
+                        <div class="form-group">
+                            <label for="thrust_twr">
+                                Thrust-to-Weight Ratio (TWR)
+                                <span class="tooltip-trigger" style="margin-left: 5px;">
+                                    ℹ️
+                                    <span class="tooltip">
+                                        <strong>How to Choose TWR:</strong><br><br>
+                                        • <strong>1.0-1.2:</strong> Very slow, uses lots of fuel fighting gravity<br>
+                                        • <strong>1.2-1.8:</strong> Efficient! Good balance ⭐<br>
+                                        • <strong>1.8-2.5:</strong> Fast but uses more fuel<br>
+                                        • <strong>2.5+:</strong> Very fast but wasteful<br><br>
+                                        <strong>For {{ state.target_planet_data.name }}:</strong> 
+                                        {% if state.target_planet_data.gravityFactor > 2.0 %}
+                                        This planet has HIGH gravity! You'll need more fuel for landing, so be efficient now (1.2-1.5).
+                                        {% elif state.target_planet_data.simDistanceKm > 3000000000 %}
+                                        This is a LONG journey! Conserve fuel (1.2-1.6).
+                                        {% else %}
+                                        Standard mission - aim for 1.3-1.8 for best results!
+                                        {% endif %}
+                                    </span>
+                                </span>
+                            </label>
+                            <input type="range" id="thrust_twr" name="thrust_twr" min="1.0" max="3.5" step="0.1" value="1.5" required>
+                            <div style="text-align: center; margin-top: 10px;">
+                                <span id="thrust-value" style="font-family: 'Orbitron', sans-serif; font-size: 2em; color: #f8b500; text-shadow: 0 0 20px rgba(248, 181, 0, 0.8);">1.5</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; margin-top: 5px; font-size: 0.85em; color: #b0bec5;">
+                                <span>Too Low</span>
+                                <span style="color: #00e676;">Optimal</span>
+                                <span>Too High</span>
+                            </div>
+                            <div class="input-hint">💡 Tip: Aim for 1.2-2.0 for optimal launch efficiency!</div>
+                        </div>
+                        
+                        <!-- Learn More Section -->
+                        <div class="learn-more" onclick="this.classList.toggle('expanded')">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <strong style="color: #64ffda;">📚 Learn More About Launching</strong>
+                                <span style="color: #64ffda; font-size: 1.2em;">▼</span>
+                            </div>
+                            <div class="learn-more-content">
+                                <div class="edu-card">
+                                    <div class="edu-card-title">🌍 Earth's Gravity</div>
+                                    <div class="edu-card-content">
+                                        Earth's gravity pulls everything down at 9.8 m/s². To escape, your rocket must produce more upward force than the downward pull of gravity. That's why TWR > 1.0 is essential!
+                                    </div>
+                                </div>
+                                <div class="edu-card">
+                                    <div class="edu-card-title">⛽ Fuel Management</div>
+                                    <div class="edu-card-content">
+                                        Every second of high thrust burns fuel. If you use too much fuel during launch, you won't have enough for the long journey ahead or for landing! Balance is key! 🎯
+                                    </div>
+                                </div>
+                                <div class="edu-card">
+                                    <div class="edu-card-title">🚀 Real Rocket Science</div>
+                                    <div class="edu-card-content">
+                                        Real rockets like the Saturn V had TWR around 1.2-1.5 at liftoff. Too high and the rocket shakes apart. Too low and it can't escape gravity. You're learning real engineering! 🎓
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="btn">
+                            <span>🚀 LAUNCH ROCKET!</span>
+                        </button>
+                    </form>
+                </div>
+
+                {% elif state.status == 'CRUISING' %}
+                <button class="help-btn" onclick="openAiTutor('What is a mid-course correction burn and why do we need it in space travel?')" title="Get Help">?</button>
+                <div class="control-panel-content">
+                    <h2 class="control-title">🌌 Phase 2: Deep Space Cruise</h2>
+                    
+                    <!-- Step Indicator -->
+                    <div class="step-indicator">
+                        <div class="step completed">
+                            <div class="step-number">✓</div>
+                            <div style="font-size: 0.85em; color: #00e676;">Launch</div>
+                        </div>
+                        <div class="step active">
+                            <div class="step-number">2</div>
+                            <div style="font-size: 0.85em; color: #64ffda;">Cruise</div>
+                        </div>
+                        <div class="step">
+                            <div class="step-number">3</div>
+                            <div style="font-size: 0.85em; color: #b0bec5;">Land</div>
+                        </div>
+                        <div class="step">
+                            <div class="step-number">4</div>
+                            <div style="font-size: 0.85em; color: #b0bec5;">Collect</div>
+                        </div>
+                        <div class="step">
+                            <div class="step-number">5</div>
+                            <div style="font-size: 0.85em; color: #b0bec5;">Return</div>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <strong>📍 Mission Status:</strong> 
+                        <p style="margin-top: 8px;">
+                            You're cruising through space! Distance remaining: <strong>{{ (state.target_distance_km - state.altitude_km) | round(0) | int }} km</strong><br>
+                            Current speed: <strong>{{ state.velocity_km_s | round(2) }} km/s</strong>
+                        </p>
+                    </div>
+                    
+                    <div class="concept-box">
+                        <div class="concept-box-title">🧠 Science Concept: Inertia & Course Corrections</div>
+                        <div class="concept-box-content">
+                            In space, objects keep moving (Newton's 1st Law: Inertia). Small burns can adjust your path. 
+                            Too much burn = faster but wastes fuel. Too little = slower journey. Find the balance! ⚖️
+                        </div>
+                    </div>
+                    
+                    <form method="POST" action="{{ url_for('cruise') }}" style="display: flex; flex-direction: column; flex: 1;">
+                        <div class="form-group">
+                            <label for="burn_duration">
+                                Mid-Course Correction Burn (seconds)
+                                <span class="tooltip-trigger" style="margin-left: 5px;">
+                                    ℹ️
+                                    <span class="tooltip">
+                                        <strong>What is a Mid-Course Correction?</strong><br><br>
+                                        In space, small adjustments keep you on target! A "burn" fires your engines briefly to:<br>
+                                        • Speed up (if you're going too slow)<br>
+                                        • Slow down (if you're going too fast)<br>
+                                        • Adjust direction (if you're off course)<br><br>
+                                        <strong>Think of it like:</strong> Steering a car, but in 3D space! 🚗→🚀
+                                    </span>
+                                </span>
+                            </label>
+                            <input type="range" id="burn_duration" name="burn_duration" min="0" max="60" step="1" value="15" required>
+                            <div style="text-align: center; margin-top: 10px;">
+                                <span id="burn-value" style="font-family: 'Orbitron', sans-serif; font-size: 2em; color: #f8b500; text-shadow: 0 0 20px rgba(248, 181, 0, 0.8);">15</span> seconds
+                            </div>
+                            <div style="display: flex; justify-content: space-between; margin-top: 5px; font-size: 0.85em; color: #b0bec5;">
+                                <span>No Burn</span>
+                                <span style="color: #00e676;">Moderate</span>
+                                <span>Long Burn</span>
+                            </div>
+                            <div class="input-hint">💡 Tip: Balance speed and fuel conservation! Each second burns fuel.</div>
+                        </div>
+                        
+                        <div class="learn-more" onclick="this.classList.toggle('expanded')">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <strong style="color: #64ffda;">📚 Learn More About Space Travel</strong>
+                                <span style="color: #64ffda; font-size: 1.2em;">▼</span>
+                            </div>
+                            <div class="learn-more-content">
+                                <div class="edu-card">
+                                    <div class="edu-card-title">🌌 Deep Space</div>
+                                    <div class="edu-card-content">
+                                        In space, there's no air resistance! Once you're moving, you keep moving (unless you burn fuel to change). 
+                                        This is why space travel is so efficient - but you need to plan your burns carefully!
+                                    </div>
+                                </div>
+                                <div class="edu-card">
+                                    <div class="edu-card-title">⏱️ Time in Space</div>
+                                    <div class="edu-card-content">
+                                        Space missions take days, weeks, or even months! Each "cruise step" represents 10 days of travel. 
+                                        Real missions to Mars take 6-9 months! 🪐
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="btn">
+                            <span>⏱️ Continue Cruise (10 Days)</span>
+                        </button>
+                    </form>
+                </div>
+
+                {% elif state.status == 'LANDING_PREP' %}
+                <button class="help-btn" onclick="openAiTutor('How do rockets slow down for landing? What is a retro-burn?')" title="Get Help">?</button>
+                <div class="control-panel-content">
+                    <h2 class="control-title">🪐 Phase 3: Landing Sequence</h2>
+                    
+                    <!-- Step Indicator -->
+                    <div class="step-indicator">
+                        <div class="step completed">
+                            <div class="step-number">✓</div>
+                            <div style="font-size: 0.85em; color: #00e676;">Launch</div>
+                        </div>
+                        <div class="step completed">
+                            <div class="step-number">✓</div>
+                            <div style="font-size: 0.85em; color: #00e676;">Cruise</div>
+                        </div>
+                        <div class="step active">
+                            <div class="step-number">3</div>
+                            <div style="font-size: 0.85em; color: #64ffda;">Land</div>
+                        </div>
+                        <div class="step">
+                            <div class="step-number">4</div>
+                            <div style="font-size: 0.85em; color: #b0bec5;">Collect</div>
+                        </div>
+                        <div class="step">
+                            <div class="step-number">5</div>
+                            <div style="font-size: 0.85em; color: #b0bec5;">Return</div>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <strong>⚠️ Critical Landing Phase:</strong> 
+                        <p style="margin-top: 8px;">
+                            You're approaching <strong>{{ state.target_planet_data.name }}</strong>!<br>
+                            Current velocity: <strong style="color: #ff6b9d;">{{ state.velocity_km_s | round(2) }} km/s</strong><br>
+                            <strong style="color: #00e676;">Target:</strong> Less than <strong>0.05 km/s</strong> for safe landing! 🛸<br><br>
+                            <strong>Planet Info:</strong> Gravity = {{ (0.0005 * state.target_planet_data.gravityFactor * 1000) | round(2) }} m/s²
+                            {% if state.target_planet_data.atmosphereDrag > 1.5 %}
+                            | <span style="color: #f8b500;">High Atmosphere</span> (helps slow you down!)
+                            {% elif state.target_planet_data.atmosphereDrag < 0.5 %}
+                            | <span style="color: #ff6b9d;">Low Atmosphere</span> (you need more retro-burn!)
+                            {% endif %}
+                        </p>
+                    </div>
+                    
+                    <div class="concept-box">
+                        <div class="concept-box-title">🧠 Science Concept: Deceleration & Landing</div>
+                        <div class="concept-box-content">
+                            To land safely, you must slow down! A <strong>retro-burn</strong> fires engines in the opposite direction of travel, 
+                            like putting on brakes in a car. Too little = crash! Too much = waste fuel or overshoot! 
+                            The planet's atmosphere can also help slow you down (like air resistance). 🛑
+                        </div>
+                    </div>
+                    
+                    <form method="POST" action="{{ url_for('land') }}" style="display: flex; flex-direction: column; flex: 1;">
+                        <div class="form-group">
+                            <label for="burn_duration">
+                                Retro-Burn Duration (seconds)
+                                <span class="tooltip-trigger" style="margin-left: 5px;">
+                                    ℹ️
+                                    <span class="tooltip">
+                                        <strong>What is a Retro-Burn?</strong><br><br>
+                                        A retro-burn fires your engines <strong>backward</strong> to slow down!<br><br>
+                                        <strong>Think of it like:</strong> Throwing a ball forward, then throwing another ball backward to slow it down! ⚾←⚾<br><br>
+                                        <strong>Current Speed:</strong> {{ state.velocity_km_s | round(2) }} km/s<br>
+                                        <strong>Need:</strong> < 0.05 km/s<br>
+                                        <strong>Difference:</strong> {{ (state.velocity_km_s - 0.05) | round(2) }} km/s to slow down!
+                                    </span>
+                                </span>
+                            </label>
+                            <input type="range" id="burn_duration" name="burn_duration" min="0" max="15" step="1" value="5" required>
+                            <div style="text-align: center; margin-top: 10px;">
+                                <span id="burn-value" style="font-family: 'Orbitron', sans-serif; font-size: 2em; color: #f8b500; text-shadow: 0 0 20px rgba(248, 181, 0, 0.8);">5</span> seconds
+                            </div>
+                            <div style="display: flex; justify-content: space-between; margin-top: 5px; font-size: 0.85em; color: #b0bec5;">
+                                <span>Too Short</span>
+                                <span style="color: #00e676;">Just Right</span>
+                                <span>Too Long</span>
+                            </div>
+                            <div class="input-hint">
+                                💡 Tip: Start with 3-7 seconds. 
+                                {% if state.velocity_km_s > 5 %}
+                                Your velocity is HIGH - you'll need a longer burn!
+                                {% elif state.velocity_km_s < 2 %}
+                                Your velocity is moderate - a shorter burn might work.
+                                {% else %}
+                                Your velocity is moderate - adjust based on results!
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="learn-more" onclick="this.classList.toggle('expanded')">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <strong style="color: #64ffda;">📚 Learn More About Landing</strong>
+                                <span style="color: #64ffda; font-size: 1.2em;">▼</span>
+                            </div>
+                            <div class="learn-more-content">
+                                <div class="edu-card">
+                                    <div class="edu-card-title">🛸 Landing Challenges</div>
+                                    <div class="edu-card-content">
+                                        Landing on another planet is one of the hardest parts of space travel! 
+                                        You're moving super fast and need to slow down precisely. Too fast = crash! 
+                                        Too slow = waste fuel. Real missions use computers to calculate the perfect burn! 🤖
+                                    </div>
+                                </div>
+                                <div class="edu-card">
+                                    <div class="edu-card-title">🌍 Real Examples</div>
+                                    <div class="edu-card-content">
+                                        • <strong>Mars Rovers:</strong> Used parachutes AND retro-rockets!<br>
+                                        • <strong>Apollo Moon Landing:</strong> Astronauts manually controlled the landing burn!<br>
+                                        • <strong>SpaceX:</strong> Uses computer-controlled precision landing!<br>
+                                        You're doing what real astronauts do! 🚀
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-danger">
+                            <span>🛸 EXECUTE LANDING BURN</span>
+                        </button>
+                    </form>
+                </div>
+
+                {% elif state.status == 'SURFACE_DATA' %}
+                <button class="help-btn" onclick="openAiTutor('What kind of scientific data do we collect on other planets and why is it important?')" title="Get Help">?</button>
+                <div class="control-panel-content">
+                    <h2 class="control-title">🔬 Phase 4: Data Collection</h2>
+                    
+                    <!-- Step Indicator -->
+                    <div class="step-indicator">
+                        <div class="step completed">
+                            <div class="step-number">✓</div>
+                            <div style="font-size: 0.85em; color: #00e676;">Launch</div>
+                        </div>
+                        <div class="step completed">
+                            <div class="step-number">✓</div>
+                            <div style="font-size: 0.85em; color: #00e676;">Cruise</div>
+                        </div>
+                        <div class="step completed">
+                            <div class="step-number">✓</div>
+                            <div style="font-size: 0.85em; color: #00e676;">Land</div>
+                        </div>
+                        <div class="step active">
+                            <div class="step-number">4</div>
+                            <div style="font-size: 0.85em; color: #64ffda;">Collect</div>
+                        </div>
+                        <div class="step">
+                            <div class="step-number">5</div>
+                            <div style="font-size: 0.85em; color: #b0bec5;">Return</div>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-success">
+                        <strong>🎉 Landing Successful!</strong> 
+                        <p style="margin-top: 8px;">
+                            You've safely landed on <strong>{{ state.target_planet_data.name }}</strong>! 🌟<br>
+                            Now it's time to collect scientific data about this amazing world!
+                        </p>
+                    </div>
+                    
+                    <div class="concept-box">
+                        <div class="concept-box-title">🧠 Science Concept: Planetary Science</div>
+                        <div class="concept-box-content">
+                            Scientists study other planets to learn about our solar system, how planets form, and if life could exist elsewhere! 
+                            Data collection uses instruments that need power (fuel). The more data, the more we learn! 📊
+                        </div>
+                    </div>
+                    
+                    <div class="edu-card">
+                        <div class="edu-card-title">🔬 What Data Do We Collect?</div>
+                        <div class="edu-card-content">
+                            • <strong>Atmosphere:</strong> What gases are present? Can we breathe?<br>
+                            • <strong>Surface:</strong> Rocks, soil composition, signs of water<br>
+                            • <strong>Temperature:</strong> How hot/cold is it?<br>
+                            • <strong>Gravity:</strong> How strong is the pull?<br>
+                            • <strong>Magnetic Field:</strong> Does it protect from radiation?<br><br>
+                            This data helps us understand if humans could live there! 🏠
+                        </div>
+                    </div>
+                    
+                    <form method="POST" action="{{ url_for('collect') }}" style="display: flex; flex-direction: column; flex: 1; justify-content: center;">
+                        <div style="text-align: center; margin-bottom: 20px; padding: 15px; background: rgba(0, 230, 118, 0.1); border-radius: 10px; border: 2px solid rgba(0, 230, 118, 0.3);">
+                            <p style="color: #00e676; font-weight: bold; margin-bottom: 8px;">Fuel Required: 50 units</p>
+                            <p style="color: #b0bec5;">Current Fuel: <strong style="color: #ffffff;">{{ state.fuel | round(0) | int }} units</strong></p>
+                            {% if state.fuel < 50 %}
+                            <p style="color: #ff6b9d; margin-top: 8px;">⚠️ Warning: Low fuel! Make sure you have enough for the return journey!</p>
+                            {% else %}
+                            <p style="color: #00e676; margin-top: 8px;">✅ You have enough fuel!</p>
+                            {% endif %}
+                        </div>
+                        <button type="submit" class="btn btn-success">
+                            <span>🔬 COLLECT DATA & PREPARE RETURN</span>
+                        </button>
+                    </form>
+                </div>
+
+                {% elif state.status == 'RETURN_PREP' %}
+                <button class="help-btn" onclick="openAiTutor('What challenges do we face when returning from another planet to Earth?')" title="Get Help">?</button>
+                <div class="control-panel-content">
+                    <h2 class="control-title">🏠 Phase 5: Return Home</h2>
+                    
+                    <!-- Step Indicator -->
+                    <div class="step-indicator">
+                        <div class="step completed">
+                            <div class="step-number">✓</div>
+                            <div style="font-size: 0.85em; color: #00e676;">Launch</div>
+                        </div>
+                        <div class="step completed">
+                            <div class="step-number">✓</div>
+                            <div style="font-size: 0.85em; color: #00e676;">Cruise</div>
+                        </div>
+                        <div class="step completed">
+                            <div class="step-number">✓</div>
+                            <div style="font-size: 0.85em; color: #00e676;">Land</div>
+                        </div>
+                        <div class="step completed">
+                            <div class="step-number">✓</div>
+                            <div style="font-size: 0.85em; color: #00e676;">Collect</div>
+                        </div>
+                        <div class="step active">
+                            <div class="step-number">5</div>
+                            <div style="font-size: 0.85em; color: #64ffda;">Return</div>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-success">
+                        <strong>✨ Final Phase!</strong> 
+                        <p style="margin-top: 8px;">
+                            Data collected: <strong>{{ state.collected_data_units }} / {{ state.required_data_units }} units</strong> ✅<br>
+                            Fuel remaining: <strong>{{ state.fuel | round(0) | int }} units</strong> ⛽<br>
+                            Ready to launch back to Earth! 🚀
+                        </p>
+                    </div>
+                    
+                    <div class="concept-box">
+                        <div class="concept-box-title">🧠 Science Concept: Return Journey</div>
+                        <div class="concept-box-content">
+                            Returning home requires another launch from the planet's surface, then a cruise back to Earth, 
+                            and finally re-entry through Earth's atmosphere! You need enough fuel for all these steps. 
+                            This is why fuel management throughout the mission is so critical! ⛽
+                        </div>
+                    </div>
+                    
+                    <div class="edu-card">
+                        <div class="edu-card-title">🌍 Earth Re-Entry</div>
+                        <div class="edu-card-content">
+                            When returning to Earth, spacecraft enter the atmosphere at high speed, creating intense heat from air friction. 
+                            Heat shields protect the crew and data! Real missions use special materials that burn away (ablation) to protect the spacecraft. 🔥
+                        </div>
+                    </div>
+                    
+                    <form method="POST" action="{{ url_for('return_ship') }}" style="display: flex; flex-direction: column; flex: 1; justify-content: center;">
+                        <div style="text-align: center; margin-bottom: 20px; padding: 15px; background: rgba(0, 230, 118, 0.1); border-radius: 10px; border: 2px solid rgba(0, 230, 118, 0.3);">
+                            <p style="color: #00e676; font-weight: bold; margin-bottom: 8px;">Return Burn Required: 100 units</p>
+                            <p style="color: #b0bec5;">Current Fuel: <strong style="color: #ffffff;">{{ state.fuel | round(0) | int }} units</strong></p>
+                            {% if state.fuel < 100 %}
+                            <p style="color: #ff6b9d; margin-top: 8px;">⚠️ Not enough fuel! Mission may fail.</p>
+                            {% else %}
+                            <p style="color: #00e676; margin-top: 8px;">✅ You have enough fuel for return!</p>
+                            {% endif %}
+                        </div>
+                        <button type="submit" class="btn btn-success">
+                            <span>🌍 EXECUTE RETURN LAUNCH</span>
+                        </button>
+                    </form>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Right Panel: Progress & Educational Content -->
+            <div class="dashboard-panel">
+                <div class="side-panel-title">📊 Mission Progress</div>
+                
+                <div class="progress-container-compact">
+                    <div class="progress-label-compact">
+                        <span>⛽ Fuel</span>
+                        <span>{{ state.fuel | round(0) | int }}/{{ state.initial_fuel }}</span>
+                    </div>
+                    <div class="progress-bar-compact">
+                        <div class="progress-fill-compact" style="width: {{ (state.fuel / state.initial_fuel * 100) | round }}%"></div>
+                    </div>
+                    {% if state.fuel < state.initial_fuel * 0.3 %}
+                    <div style="font-size: 0.8em; color: #ff6b9d; margin-top: 5px; text-align: center;">⚠️ Low Fuel Warning!</div>
+                    {% elif state.fuel < state.initial_fuel * 0.5 %}
+                    <div style="font-size: 0.8em; color: #f8b500; margin-top: 5px; text-align: center;">💡 Fuel getting low</div>
+                    {% endif %}
+                </div>
+
+                {% if state.target_planet_data %}
+                <div class="progress-container-compact">
+                    <div class="progress-label-compact">
+                        <span>🪐 Distance</span>
+                        <span>{{ (state.target_distance_km - state.altitude_km) | round(0) | int }} km</span>
+                    </div>
+                    <div class="progress-bar-compact">
+                        <div class="progress-fill-compact" style="width: {{ ((state.altitude_km / state.target_distance_km) * 100) | round }}%"></div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <div class="progress-container-compact">
+                    <div class="progress-label-compact">
+                        <span>🔬 Data</span>
+                        <span>{{ state.collected_data_units }}/{{ state.required_data_units }}</span>
+                    </div>
+                    <div class="progress-bar-compact">
+                        <div class="progress-fill-compact" style="width: {{ (state.collected_data_units / state.required_data_units * 100) | round }}%"></div>
+                    </div>
+                </div>
+
+                <!-- Distance Visualization -->
+                {% if state.status == 'CRUISING' and state.target_planet_data %}
+                <div style="margin-top: 20px; padding: 15px; background: rgba(0, 0, 0, 0.3); border-radius: 12px; border: 2px solid rgba(100, 200, 255, 0.3);">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+                        <div style="font-size: 2em;">🌍</div>
+                        <div style="flex: 1; height: 4px; background: linear-gradient(90deg, #64ffda, transparent); margin: 0 15px; position: relative; border-radius: 10px;">
+                            <div style="position: absolute; left: {{ ((state.altitude_km / state.target_distance_km) * 100) | round }}%; top: 50%; transform: translateY(-50%); font-size: 1.5em; transition: left 1s ease-out;">🚀</div>
+                        </div>
+                        <div style="font-size: 2em;">{{ state.target_planet_data.icon }}</div>
+                    </div>
+                    <div style="text-align: center; font-size: 0.9em; color: #64ffda;">
+                        {{ ((state.altitude_km / state.target_distance_km) * 100) | round }}% Complete
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Educational Quick Facts -->
+                <div style="margin-top: 20px; padding: 15px; background: rgba(100, 255, 218, 0.1); border-radius: 12px; border: 2px solid rgba(100, 255, 218, 0.3);">
+                    <div class="side-panel-title" style="font-size: 1.1em; margin-bottom: 12px;">🌟 Quick Facts</div>
+                    {% if state.status == 'PRE_LAUNCH' %}
+                    <div class="edu-card-content" style="font-size: 0.9em;">
+                        <strong>🚀 Launch Facts:</strong><br>
+                        • Earth's escape velocity: 11.2 km/s<br>
+                        • Real rockets use multiple stages<br>
+                        • Fuel is 90% of rocket weight!<br>
+                        • TWR must be > 1.0 to lift off
+                    </div>
+                    {% elif state.status == 'CRUISING' %}
+                    <div class="edu-card-content" style="font-size: 0.9em;">
+                        <strong>🌌 Space Travel Facts:</strong><br>
+                        • No air resistance in space!<br>
+                        • Objects keep moving (inertia)<br>
+                        • Mars trip: 6-9 months<br>
+                        • Speed of light: 300,000 km/s
+                    </div>
+                    {% elif state.status == 'LANDING_PREP' %}
+                    <div class="edu-card-content" style="font-size: 0.9em;">
+                        <strong>🪐 Landing Facts:</strong><br>
+                        • Landing is the hardest part!<br>
+                        • Atmosphere helps slow down<br>
+                        • Need precise velocity control<br>
+                        • Real missions use computers
+                    </div>
+                    {% elif state.status == 'SURFACE_DATA' %}
+                    <div class="edu-card-content" style="font-size: 0.9em;">
+                        <strong>🔬 Science Facts:</strong><br>
+                        • We study planets for life signs<br>
+                        • Data helps plan future missions<br>
+                        • Each planet is unique!<br>
+                        • Science needs power (fuel)
+                    </div>
+                    {% elif state.status == 'RETURN_PREP' %}
+                    <div class="edu-card-content" style="font-size: 0.9em;">
+                        <strong>🏠 Return Facts:</strong><br>
+                        • Need fuel for launch + cruise<br>
+                        • Earth re-entry is very hot!<br>
+                        • Heat shields protect data<br>
+                        • Precision is critical!
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Planet Info Card -->
+                {% if state.target_planet_data %}
+                <div style="margin-top: 15px; padding: 15px; background: rgba(248, 181, 0, 0.1); border-radius: 12px; border: 2px solid rgba(248, 181, 0, 0.3);">
+                    <div style="font-weight: bold; color: #f8b500; margin-bottom: 10px; font-size: 1.1em;">🪐 {{ state.target_planet_data.name }}</div>
+                    <div style="font-size: 0.85em; color: #b0bec5; line-height: 1.6;">
+                        <strong>Type:</strong> {{ state.target_planet_data.type }}<br>
+                        <strong>Distance:</strong> {{ state.target_planet_data.distance }}<br>
+                        <strong>Gravity:</strong> {{ (0.0005 * state.target_planet_data.gravityFactor * 1000) | round(2) }} m/s²<br>
+                        <strong>Focus:</strong> {{ state.target_planet_data.focus }}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Selection Screen - Always show when status is SELECTION -->
+        {% if state.status == 'SELECTION' %}
+        <div style="flex: 1; overflow-y: auto; width: 100%;">
+            <div class="status-card" style="max-width: 1400px; margin: 0 auto;">
+                <div style="text-align: center; margin-bottom: 40px;">
+                    <h2 style="font-family: 'Orbitron', sans-serif; color: #64ffda; margin-bottom: 20px; font-size: 3em; text-shadow: 0 0 30px rgba(100, 255, 218, 0.8); animation: pulse 2s infinite;">
+                        🌌 Choose Your Mission Destination 🌌
+                    </h2>
+                <p style="font-size: 1.5em; color: #ffffff; margin-bottom: 15px; font-weight: 600;">
+                    Welcome, Future Astronaut! 🚀
+                </p>
+                <p style="text-align: center; font-size: 1.3em; color: #b0bec5; margin-bottom: 20px; line-height: 1.6;">
+                    Pick an amazing exoplanet to explore! Each mission teaches you different space science concepts!<br>
+                    Learn about gravity, propulsion, orbital mechanics, and more! 🌟
+                </p>
+                
+                <!-- Quick Start Guide -->
+                <div class="learn-more" onclick="this.classList.toggle('expanded')" style="max-width: 800px; margin: 0 auto 30px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <strong style="color: #64ffda; font-size: 1.2em;">📖 How to Play - Quick Guide</strong>
+                        <span style="color: #64ffda; font-size: 1.5em;">▼</span>
+                    </div>
+                    <div class="learn-more-content">
+                        <div class="edu-card">
+                            <div class="edu-card-title">🎯 Your Mission</div>
+                            <div class="edu-card-content">
+                                <strong>Goal:</strong> Launch from Earth → Travel to another planet → Land safely → Collect data → Return home!<br><br>
+                                <strong>5 Phases:</strong><br>
+                                1️⃣ <strong>Launch:</strong> Set TWR to escape Earth's gravity<br>
+                                2️⃣ <strong>Cruise:</strong> Travel through space (use burns to adjust)<br>
+                                3️⃣ <strong>Land:</strong> Slow down with retro-burn for safe landing<br>
+                                4️⃣ <strong>Collect:</strong> Gather scientific data on the surface<br>
+                                5️⃣ <strong>Return:</strong> Launch back to Earth with your data!<br><br>
+                                <strong>💡 Tip:</strong> Watch your fuel! You need it for every phase!
+                            </div>
+                        </div>
+                        <div class="edu-card">
+                            <div class="edu-card-title">🤖 Get Help Anytime</div>
+                            <div class="edu-card-content">
+                                • Click the <strong>🤖 AI Tutor button</strong> (bottom right) to ask questions!<br>
+                                • Hover over <strong>ℹ️ info icons</strong> for quick explanations<br>
+                                • Click <strong>📚 Learn More</strong> sections for detailed info<br>
+                                • Use the <strong>? Help button</strong> in each phase for context-specific help!<br><br>
+                                SABRINA (the AI tutor) is always ready to explain space science concepts!
+                            </div>
+                        </div>
+                        <div class="edu-card">
+                            <div class="edu-card-title">🎓 What You'll Learn</div>
+                            <div class="edu-card-content">
+                                • <strong>Physics:</strong> Newton's Laws, gravity, acceleration, inertia<br>
+                                • <strong>Engineering:</strong> Fuel management, thrust, efficiency<br>
+                                • <strong>Space Science:</strong> Orbital mechanics, planetary science<br>
+                                • <strong>Problem Solving:</strong> Planning, decision-making, resource management<br><br>
+                                Each planet teaches different concepts - try them all!
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; margin-top: 40px;">
+                {% for key, planet in exoplanets.items() %}
+                <form action="{{ url_for('select_planet_route') }}" method="post" style="height: 100%;">
+                    <input type="hidden" name="planet_key" value="{{ key }}">
+                    <button type="submit" class="w-full h-full text-left p-0 border-none bg-transparent" style="height: 100%;">
+                        <div class="planet-card" style="height: 100%; display: flex; flex-direction: column;">
+                            <div style="text-align: center; margin-bottom: 20px;">
+                                <div class="planet-icon" style="font-size: 6em;">{{ planet.icon }}</div>
+                            </div>
+                            <h3 style="font-family: 'Orbitron', sans-serif; font-size: 2em; font-weight: bold; color: white; margin-bottom: 15px; text-align: center; text-shadow: 0 0 20px rgba(255, 255, 255, 0.5);">{{ planet.name }}</h3>
+                            <p style="font-size: 1.4em; font-weight: 600; color: #64ffda; margin-bottom: 20px; text-align: center; text-shadow: 0 0 15px rgba(100, 255, 218, 0.6);">{{ planet.type }}</p>
+                            <div style="color: #b0bec5; line-height: 2; flex-grow: 1; padding: 0 10px;">
+                                <p style="font-size: 1.1em; margin-bottom: 10px;">
+                                    <strong style="color: #64ffda; font-size: 1.2em;">📍 Distance:</strong><br>
+                                    <span style="font-size: 1.1em;">{{ planet.distance }}</span>
+                                    <span class="tooltip-trigger" style="margin-left: 5px; font-size: 0.9em;">
+                                        ℹ️
+                                        <span class="tooltip" style="width: 250px;">
+                                            <strong>Why Distance Matters:</strong><br><br>
+                                            Longer distances mean:<br>
+                                            • More time in space<br>
+                                            • More fuel needed for cruise<br>
+                                            • Need to be more efficient!<br><br>
+                                            Real space missions take months or years!
+                                        </span>
+                                    </span>
+                                </p>
+                                <p style="font-size: 1.1em; margin-bottom: 15px;">
+                                    <strong style="color: #f8b500; font-size: 1.2em;">🎯 Learning Focus:</strong><br>
+                                    <span style="font-size: 1.1em;">{{ planet.focus }}</span>
+                                    <span class="tooltip-trigger" style="margin-left: 5px; font-size: 0.9em;">
+                                        ℹ️
+                                        <span class="tooltip" style="width: 250px;">
+                                            <strong>What You'll Learn:</strong><br><br>
+                                            Each planet focuses on different space science concepts. 
+                                            This mission will teach you about {{ planet.focus.lower() }} through hands-on experience!<br><br>
+                                            Try different planets to learn different concepts!
+                                        </span>
+                                    </span>
+                                </p>
+                                {% if planet.description %}
+                                <p style="margin-top: 15px; font-size: 1em; font-style: italic; color: #d0d0d0;">
+                                    {{ planet.description }}
+                                </p>
+                                {% else %}
+                                <p style="margin-top: 15px; font-size: 1em; font-style: italic; color: #d0d0d0;">
+                                    {% if key == 'Aetheria' %}
+                                    A mysterious frozen moon with unique orbital challenges. Perfect for learning about navigation and scale!
+                                    {% elif key == 'TerraNova' %}
+                                    A massive super-Earth with intense gravity. Master thrust and escape velocity here!
+                                    {% elif key == 'Kyperus' %}
+                                    An ocean world with dense atmosphere. Learn about atmospheric drag and pressure!
+                                    {% endif %}
+                                </p>
+                                {% endif %}
+                            </div>
+                            <div class="launch-button" style="margin-top: 25px; padding: 20px; background: linear-gradient(135deg, #00e676, #00bcd4); border-radius: 15px; text-align: center; font-weight: bold; font-size: 1.4em; color: white; box-shadow: 0 8px 25px rgba(0, 230, 118, 0.5); transition: all 0.3s; transform: scale(1); position: relative; overflow: hidden;">
+                                <span style="position: relative; z-index: 1;">🚀 Launch Mission! 🚀</span>
+                            </div>
+                        </div>
+                    </button>
+                </form>
+                {% endfor %}
+            </div>
+            
+            <div style="text-align: center; margin-top: 40px; padding: 20px; background: rgba(100, 255, 218, 0.1); border-radius: 15px; border: 2px solid rgba(100, 255, 218, 0.3);">
+                <p style="font-size: 1.2em; color: #64ffda;">
+                    💡 <strong>Tip:</strong> Click on any planet card above to start your mission! Each planet offers unique challenges and learning opportunities!
+                </p>
+            </div>
+            </div>
+        </div>
+        {% endif %}
+
+    </div>
+
+    <!-- AI Tutor Button -->
+    {% if state.target_planet_data %}
+    <button id="ai-tutor-button" onclick="openAiTutor()" class="ai-tutor-btn">
+        🤖
+    </button>
+    {% endif %}
+
+    <!-- AI Tutor Modal -->
+    <div id="ai-tutor-modal" class="hidden fixed inset-0 z-50 bg-black bg-opacity-80 flex items-center justify-center p-4" style="backdrop-filter: blur(10px);">
+        <div class="bg-gray-900 rounded-2xl shadow-2xl w-full max-w-2xl h-full max-h-[85vh] flex flex-col border-4 border-indigo-500">
+            <div class="flex justify-between items-center p-5 border-b-4 border-gray-700 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-t-xl">
+                <h2 class="text-3xl font-bold text-white">🤖 SABRINA: Your AI Mission Tutor</h2>
+                <button onclick="closeAiTutor()" class="text-white hover:text-red-400 p-2 rounded-full hover:bg-red-500 transition" style="font-size: 1.5em;">✕</button>
+            </div>
+            <div id="ai-tutor-output" class="flex-grow p-5 space-y-4 overflow-y-auto flex flex-col bg-gray-800">
+                <div class="mb-3 p-4 rounded-xl bg-emerald-900/50 self-start max-w-md border-2 border-emerald-500">
+                    <strong>🤖 SABRINA:</strong> Hi there, future astronaut! 👋 I'm SABRINA, your AI Mission Tutor. Ask me anything about space, gravity, rockets, or your current mission! I'm here to help you learn! 🚀✨
+                </div>
+            </div>
+            <div id="ai-tutor-loading" class="text-center p-3 hidden bg-gray-700">
+                <p class="text-indigo-400 animate-pulse font-bold">🌟 SABRINA is thinking... 🌟</p>
+            </div>
+            <div class="p-5 border-t-4 border-gray-700 flex gap-3 bg-gray-800 rounded-b-xl">
+                <input type="text" id="ai-tutor-input" placeholder="Ask SABRINA a question..." 
+                    class="flex-grow p-4 rounded-xl bg-gray-700 text-white border-2 border-gray-600 focus:outline-none focus:ring-4 focus:ring-indigo-500 text-lg"
+                    onkeydown="if(event.key === 'Enter') handleAiQuery()">
+                <button onclick="handleAiQuery()" class="p-4 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 rounded-xl text-white font-bold transition text-lg">
+                    Send 🚀
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script>
-        let currentStatus = '{{ state.status }}';
-        let currentPlanetName = '{{ state.target_planet_data.name if state.target_planet_data }}';
+        // Create animated starfield
+        function createStars() {
+            const starsContainer = document.getElementById('stars');
+            const numStars = 150;
+            
+            for (let i = 0; i < numStars; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                const size = Math.random() * 4 + 1;
+                star.style.width = size + 'px';
+                star.style.height = size + 'px';
+                star.style.left = Math.random() * 100 + '%';
+                star.style.top = Math.random() * 100 + '%';
+                star.style.animationDelay = Math.random() * 3 + 's';
+                star.style.animationDuration = (Math.random() * 3 + 2) + 's';
+                starsContainer.appendChild(star);
+            }
+        }
 
-        // --- AI Tutor Functionality (Frontend only) ---
+        // Slider value updates
+        document.addEventListener('DOMContentLoaded', function() {
+            createStars();
+            
+            const thrustSlider = document.getElementById('thrust_twr');
+            const burnSliders = document.querySelectorAll('input[name="burn_duration"]');
+            
+            if (thrustSlider) {
+                thrustSlider.addEventListener('input', (e) => {
+                    const valueDisplay = document.getElementById('thrust-value');
+                    if (valueDisplay) {
+                        valueDisplay.textContent = e.target.value;
+                    }
+                });
+            }
+            
+            burnSliders.forEach((slider) => {
+                slider.addEventListener('input', (e) => {
+                    const valueDisplay = document.getElementById('burn-value');
+                    if (valueDisplay) {
+                        valueDisplay.textContent = e.target.value;
+                    }
+                });
+            });
+        });
+
+        // AI Tutor Functions
+        let currentStatus = '{{ state.status }}';
+        let currentPlanetName = '{{ state.target_planet_data.name if state.target_planet_data else "Unknown" }}';
         const geminiModel = "gemini-2.5-flash-preview-09-2025";
-        const apiKey = "";
+        const apiKey = "{{ gemini_api_key }}";
         const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${apiKey}`;
+        
+        // Debug: Log API key status (first 10 chars only for security)
+        console.log('🔑 API Key Status:', apiKey ? `Set (${apiKey.substring(0, 10)}...)` : 'NOT SET');
+        
+        // Check if API key is set
+        if (!apiKey || apiKey.trim() === '') {
+            console.warn('⚠️ Gemini API key is not set. The AI tutor will not work. Set GEMINI_API_KEY environment variable.');
+        }
+
+        // Helper function to create a timeout promise
+        function timeoutPromise(ms) {
+            return new Promise((_, reject) => 
+                setTimeout(() => reject(new Error('Request timeout')), ms)
+            );
+        }
 
         async function getAiExplanation(prompt, systemInstruction) {
             const aiLoadingDiv = document.getElementById('ai-tutor-loading');
@@ -53,32 +2062,69 @@
             const payload = {
                 contents: [{ parts: [{ text: prompt }] }],
                 systemInstruction: { parts: [{ text: systemInstruction }] },
-                tools: [{ "google_search": {} }], 
+                // Removed google_search tool to speed up responses
             };
 
-            const maxRetries = 3;
+            const maxRetries = 2; // Reduced retries
+            const timeoutMs = 15000; // 15 second timeout per request
+
             for (let attempt = 0; attempt < maxRetries; attempt++) {
                 try {
-                    const response = await fetch(apiUrl, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
+                    // Race between fetch and timeout
+                    const response = await Promise.race([
+                        fetch(apiUrl, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        }),
+                        timeoutPromise(timeoutMs)
+                    ]);
 
                     if (response.ok) {
                         const result = await response.json();
                         const candidate = result.candidates?.[0];
                         if (candidate && candidate.content?.parts?.[0]?.text) {
                             return candidate.content.parts[0].text;
+                        } else {
+                            // No text in response
+                            return "I received a response but couldn't extract the text. Please try asking again!";
+                        }
+                    } else {
+                        // Handle API errors
+                        let errorData = {};
+                        try {
+                            errorData = await response.json();
+                        } catch (e) {
+                            // If JSON parsing fails, use empty object
+                        }
+                        
+                        if (response.status === 403 || response.status === 401) {
+                            return "ERROR: Invalid API key. Please check your GEMINI_API_KEY environment variable.";
+                        } else if (response.status === 429) {
+                            return "ERROR: API rate limit exceeded. Please try again in a moment.";
+                        } else {
+                            return `ERROR: API request failed (${response.status}). ${errorData.error?.message || 'Please try again.'}`;
                         }
                     }
                 } catch (error) {
-                    console.warn(`Attempt ${attempt + 1} failed. Retrying...`);
+                    console.warn(`Attempt ${attempt + 1} failed:`, error.message);
+                    
+                    // If it's a timeout or network error and we have retries left
                     if (attempt < maxRetries - 1) {
-                        await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 1000));
+                        const waitTime = Math.min(1000 * (attempt + 1), 3000); // Max 3 seconds
+                        await new Promise(resolve => setTimeout(resolve, waitTime));
+                        continue; // Retry
+                    } else {
+                        // Last attempt failed
+                        if (error.message === 'Request timeout') {
+                            return "I'm taking too long to respond! The API might be slow right now. Please try again in a moment!";
+                        } else {
+                            return "I'm having trouble connecting to the space network. Please check your internet connection and try again!";
+                        }
                     }
                 }
             }
+            
             return "I'm having trouble connecting to the space network. Please try asking again in a moment!";
         }
 
@@ -87,28 +2133,46 @@
             const query = initialPrompt || input.value.trim();
             if (!query) return;
 
-            const systemPrompt = `You are SABRINA, an AI Mission Tutor for middle school students (grades 6-8). Your tone must be encouraging, clear, and simple. Your goal is to explain complex physics and space concepts related to the current mission phase (${currentStatus}) and the selected planet (${currentPlanetName}). Use analogies and simple terms. Keep answers concise.`;
+            const systemPrompt = `You are SABRINA, an AI Mission Tutor for middle school students (grades 6-8). Your tone must be encouraging, enthusiastic, clear, and fun! Use emojis sometimes. Your goal is to explain complex physics and space concepts related to the current mission phase (${currentStatus}) and the selected planet (${currentPlanetName}). Use analogies and simple terms. Keep answers concise but engaging. Be like a friendly science teacher!`;
             
             const prompt = `The student is currently in the ${currentStatus} phase of the mission to ${currentPlanetName}. The student asked: "${query}"`;
 
             const outputDiv = document.getElementById('ai-tutor-output');
-            outputDiv.innerHTML += `<div class="mb-2 p-2 rounded-lg bg-blue-900/50 self-end max-w-xs md:max-w-md">🧑‍🚀 You: ${query}</div>`;
+            outputDiv.innerHTML += `<div class="mb-3 p-4 rounded-xl bg-blue-900/50 self-end max-w-md border-2 border-blue-500"><strong>🧑‍🚀 You:</strong> ${query}</div>`;
             if (!initialPrompt) input.value = ''; 
             
-            outputDiv.innerHTML += `<div id="ai-response-temp" class="mb-2 p-2 rounded-lg bg-gray-700/50 self-start max-w-xs md:max-w-md">🤖 SABRINA: Thinking...</div>`;
+            outputDiv.innerHTML += `<div id="ai-response-temp" class="mb-3 p-4 rounded-xl bg-gray-700/50 self-start max-w-md border-2 border-gray-600"><strong>🤖 SABRINA:</strong> Thinking...</div>`;
             outputDiv.scrollTop = outputDiv.scrollHeight;
 
-            const responseText = await getAiExplanation(prompt, systemInstruction);
+            let responseText;
+            try {
+                responseText = await getAiExplanation(prompt, systemPrompt);
+            } catch (error) {
+                console.error('Error getting AI explanation:', error);
+                responseText = "Oops! Something went wrong. Please try asking again!";
+            }
+            
+            // Always hide loading indicator
+            const loadingDiv = document.getElementById('ai-tutor-loading');
+            if (loadingDiv) {
+                loadingDiv.classList.add('hidden');
+            }
             
             const tempDiv = document.getElementById('ai-response-temp');
             if (tempDiv) {
-                tempDiv.innerHTML = `🤖 SABRINA: ${responseText}`;
-                tempDiv.id = ''; 
-                tempDiv.classList.replace('bg-gray-700/50', 'bg-emerald-900/50');
+                // Check if response is an error message
+                if (responseText.includes('ERROR') || responseText.includes('API key') || responseText.includes('trouble connecting')) {
+                    tempDiv.innerHTML = `<strong>🤖 SABRINA:</strong> ${responseText}<br><br><em style="font-size: 0.9em; color: #f8b500;">💡 If this keeps happening, check your internet connection or try again in a moment.</em>`;
+                    tempDiv.classList.replace('bg-gray-700/50', 'bg-red-900/50');
+                    tempDiv.classList.replace('border-gray-600', 'border-red-500');
+                } else {
+                    tempDiv.innerHTML = `<strong>🤖 SABRINA:</strong> ${responseText}`;
+                    tempDiv.classList.replace('bg-gray-700/50', 'bg-emerald-900/50');
+                    tempDiv.classList.replace('border-gray-600', 'border-emerald-500');
+                }
             }
 
-            outputDiv.scrollTop = outputDiv.scrollHeight; 
-            document.getElementById('ai-tutor-loading').classList.add('hidden');
+            outputDiv.scrollTop = outputDiv.scrollHeight;
         }
 
         function openAiTutor(initialPrompt = '') {
@@ -116,10 +2180,9 @@
             document.body.classList.add('overflow-hidden');
 
             if (initialPrompt) {
-                // Clear previous chat only if an error prompt is provided
                 document.getElementById('ai-tutor-output').innerHTML = `
-                    <div class="mb-2 p-3 rounded-lg bg-emerald-900/50 self-start max-w-xs md:max-w-md">
-                        🤖 SABRINA: Welcome! I'm your AI Mission Tutor. Ask me anything about gravity, propulsion, or the current phase of our mission!
+                    <div class="mb-3 p-4 rounded-xl bg-emerald-900/50 self-start max-w-md border-2 border-emerald-500">
+                        <strong>🤖 SABRINA:</strong> Welcome! I'm your AI Mission Tutor. Ask me anything about gravity, propulsion, or the current phase of our mission! 🚀✨
                     </div>
                 `; 
                 handleAiQuery(initialPrompt);
@@ -130,304 +2193,15 @@
             document.getElementById('ai-tutor-modal').classList.add('hidden');
             document.body.classList.remove('overflow-hidden');
         }
-    </script>
 
-    <!-- Header and Mission Status Bar -->
-    <header class="w-full max-w-6xl flex justify-between items-center mb-8 p-4 bg-gray-800 rounded-xl shadow-lg">
-        <h1 class="text-4xl md:text-5xl font-extrabold header-gradient">
-            SABRINA
-        </h1>
-        <div id="mission-status-display" class="text-right">
-            {% if state.target_planet_data %}
-            <p class="text-sm md:text-base font-semibold text-emerald-300">
-                Mission: {{ state.target_planet_data.name }} - Phase: {{ state.status.replace('_', ' ') }}
-            </p>
-            <p class="text-xs md:text-sm text-gray-400">Day: {{ state.mission_day }} | Fuel: {{ state.fuel_display }} / {{ state.initial_fuel }}</p>
-            {% else %}
-            <p class="text-base font-semibold text-gray-400">Select a Planet to Begin</p>
-            {% endif %}
-        </div>
-    </header>
-
-    <!-- Main Application Container -->
-    <main id="app-container" class="w-full max-w-6xl flex flex-col items-center flex-grow">
-        
-        <!-- --- Mission Status Display --- -->
+        // Auto-open AI tutor on failure
         {% if state.status == 'FAILURE' %}
-            <div class="text-center p-8 w-full max-w-md bg-red-900/50 rounded-xl mb-6 shadow-xl">
-                <h2 class="text-3xl font-bold text-red-400 mb-2">MISSION FAILED!</h2>
-                <p class="text-lg mb-4">{{ state.error_code }}: {{ mission_result_message }}</p>
-                <p class="text-sm text-red-200">The mission cannot continue from this fatal error.</p>
-                <form action="{{ url_for('home') }}" method="get">
-                    <button type="submit" class="mt-4 px-6 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg">Start New Mission</button>
-                </form>
-            </div>
-            <script>
-                // Auto-trigger AI for failure explanation
-                window.onload = function() {
-                    openAiTutor("I just failed the mission with error code '{{ state.error_code }}'. Explain what went wrong in simple terms.");
-                }
-            </script>
-        {% elif state.status == 'SUCCESS' %}
-             <div class="text-center p-8 w-full max-w-md bg-green-900/50 rounded-xl mb-6 shadow-xl">
-                <h2 class="text-3xl font-bold text-green-400 mb-2">MISSION SUCCESS!</h2>
-                <p class="text-lg mb-4">You successfully collected {{ state.collected_data_units }} data units and returned home safely.</p>
-                <form action="{{ url_for('home') }}" method="get">
-                    <button type="submit" class="mt-4 px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg">Start Another Mission</button>
-                </form>
-            </div>
+        window.onload = function() {
+            setTimeout(() => {
+                openAiTutor("I just failed the mission with error code '{{ state.error_code }}'. Explain what went wrong in simple, fun terms that a middle school student can understand!");
+            }, 1000);
+        };
         {% endif %}
-        
-        <!-- --- 1. Selection Screen (Initial View) --- -->
-        {% if state.status == 'SELECTION' %}
-            <div class="max-w-4xl mx-auto text-center py-6">
-                <h2 class="text-3xl md:text-4xl font-bold mb-4 text-emerald-400">Choose Your Destination</h2>
-                <p class="text-lg text-gray-400">
-                    Select one of these fascinating exoplanets. Your choice determines the mission's core scientific challenge!
-                </p>
-            </div>
-            <div class="grid md:grid-cols-3 gap-6 w-full max-w-6xl mt-6">
-                {% for key, planet in exoplanets.items() %}
-                <form action="{{ url_for('select_planet_route') }}" method="post">
-                    <input type="hidden" name="planet_key" value="{{ key }}">
-                    <button type="submit" class="w-full h-full text-left p-0 border-none bg-transparent">
-                        <div class="card-glow {{ planet.bgColor }} rounded-xl p-6 flex flex-col items-center text-center cursor-pointer transition-all duration-300 transform hover:scale-[1.02]">
-                            <span class="text-6xl mb-4">{{ planet.icon }}</span>
-                            <h3 class="text-2xl font-extrabold text-white mb-2">{{ planet.name }}</h3>
-                            <p class="text-lg font-semibold text-gray-200 mb-4">{{ planet.type }}</p>
-                            <div class="w-full text-left space-y-2 text-sm text-gray-300">
-                                <p class="truncate"><span class="font-bold">Distance:</span> {{ planet.distance }}</p>
-                                <p><span class="font-bold text-yellow-300">Challenge:</span> {{ planet.focus }}</p>
-                                <p class="mt-4 text-sm">{{ planet.description }}</p>
-                            </div>
-                            <div class="mt-6 w-full py-2 px-4 bg-emerald-500 text-white font-bold rounded-lg shadow-lg">
-                                Start Mission to {{ planet.name }}
-                            </div>
-                        </div>
-                    </button>
-                </form>
-                {% endfor %}
-            </div>
-        {% endif %}
-
-        <!-- --- 2. Pre-Launch Screen --- -->
-        {% if state.status == 'PRE_LAUNCH' %}
-            <div class="max-w-4xl mx-auto text-center py-6">
-                <h2 class="text-3xl md:text-4xl font-bold mb-2 text-yellow-400">Phase 1: Pre-Launch Check</h2>
-                <p class="text-xl font-semibold text-white mb-4">Challenge: Overcoming Earth's Gravity</p>
-                <p class="text-sm mt-2 text-red-300">You are starting with {{ state.initial_fuel }} units of fuel.</p>
-            </div>
-
-            <div class="bg-gray-800 p-8 rounded-xl w-full max-w-2xl mt-6 shadow-2xl">
-                <h3 class="text-2xl font-bold mb-4 text-center">Set Initial Thrust-to-Weight Ratio (TWR)</h3>
-                
-                <form id="launch-form" action="{{ url_for('launch') }}" method="post">
-                    <p class="text-center text-gray-300 mb-6">TWR > 1.0 is required for liftoff.</p>
-                    <div class="mb-8">
-                        <label for="thrustSlider" class="block text-lg font-medium text-white mb-2">Thrust Ratio (TWR): <span id="thrust-value" class="text-yellow-400">1.5</span></label>
-                        <input type="range" id="thrustSlider" name="thrust_twr" min="1.0" max="3.5" step="0.1" value="1.5" class="w-full h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer">
-                    </div>
-                    <button type="submit" class="w-full py-3 px-6 bg-green-600 hover:bg-green-700 text-white font-extrabold text-xl rounded-lg shadow-lg transition duration-200">
-                        Launch Rocket!
-                    </button>
-                </form>
-
-                {% if state.error_code %}
-                    <div class="mt-4 text-center font-bold text-lg text-yellow-400">
-                        Launch successful, but SABRINA warns: {{ mission_result_message }}
-                    </div>
-                     <script>
-                        // Auto-trigger AI for success/warning feedback
-                        window.onload = function() {
-                            openAiTutor("Launch was successful but I received a warning about efficiency. Explain why my TWR of " + document.getElementById('thrustSlider').value + " was inefficient for a mission to {{ state.target_planet_data.name }}.");
-                        }
-                    </script>
-                {% endif %}
-            </div>
-            <script>
-                document.getElementById('thrustSlider').addEventListener('input', (e) => {
-                    document.getElementById('thrust-value').textContent = e.target.value;
-                });
-            </script>
-        {% endif %}
-        
-        <!-- --- 3. Cruising Screen --- -->
-        {% if state.status == 'CRUISING' %}
-            {% set distance_remaining = state.target_distance_km - state.altitude_km %}
-            <div class="max-w-4xl mx-auto text-center py-6">
-                <h2 class="text-3xl md:text-4xl font-bold mb-2 text-indigo-400">Phase 2: Deep Space Cruise</h2>
-                <p class="text-xl font-semibold text-white mb-4">Challenge: Mid-Course Correction Burn</p>
-                <p class="text-lg text-gray-400">
-                    Distance remaining: <span class="text-yellow-300">{{ "{:,.0f}".format(distance_remaining) }} km</span>. Current Velocity: {{ state.velocity_display }} km/s.
-                </p>
-            </div>
-
-            <div class="bg-gray-800 p-8 rounded-xl w-full max-w-2xl mt-6 shadow-2xl">
-                <h3 class="text-2xl font-bold mb-4 text-center">Set Correction Burn Duration</h3>
-                
-                <form action="{{ url_for('cruise') }}" method="post">
-                    <p class="text-center text-gray-300 mb-4">
-                        Current Fuel: {{ state.fuel_display }}. Each second of burn costs {{ (state.initial_fuel | float) / state.initial_fuel * 1.5 }} units of fuel.
-                    </p>
-
-                    <div class="mb-8">
-                        <label for="burnSlider" class="block text-lg font-medium text-white mb-2">Burn Duration (Seconds): <span id="burn-value" class="text-yellow-400">15</span>s</label>
-                        <input type="range" id="burnSlider" name="burn_duration" min="0" max="60" step="1" value="15" class="w-full h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer">
-                    </div>
-
-                    <button type="submit" class="w-full py-3 px-6 bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xl rounded-lg shadow-lg transition duration-200">
-                        Perform Burn & Continue Cruise (10 Days)
-                    </button>
-                </form>
-                 {% if state.error_code == 'SUBOPTIMAL_BURN' %}
-                    <div class="mt-4 text-center font-bold text-lg text-yellow-400">
-                        WARNING: Burn was sub-optimal. Check efficiency!
-                    </div>
-                     <script>
-                        window.onload = function() {
-                            openAiTutor("I chose a sub-optimal burn during cruising. Explain how I can balance speed and fuel conservation better for the mission to {{ state.target_planet_data.name }}.");
-                        }
-                    </script>
-                {% endif %}
-            </div>
-            <script>
-                document.getElementById('burnSlider').addEventListener('input', (e) => {
-                    document.getElementById('burn-value').textContent = e.target.value;
-                });
-            </script>
-        {% endif %}
-        
-        <!-- --- 4. Landing Screen (New) --- -->
-        {% if state.status == 'LANDING_PREP' %}
-            {% set gravity_display = (0.0005 * state.target_planet_data.gravityFactor * 1000) | round(2) %}
-            {% set drag_info = 'Very High Drag (Use minimal retro-burn!)' if state.target_planet_data.atmosphereDrag > 1.5 else ('Very Low Drag (Need max retro-burn!)' if state.target_planet_data.atmosphereDrag < 0.5 else 'Moderate Drag') %}
-            
-            <div class="max-w-4xl mx-auto text-center py-6">
-                <h2 class="text-3xl md:text-4xl font-bold mb-2 text-pink-400">Phase 3: Landing Preparation</h2>
-                <p class="text-xl font-semibold text-white mb-4">Challenge: Decelerate for Safe Touchdown</p>
-                <p class="text-lg text-gray-400">
-                    Target: {{ state.target_planet_data.name }}. Gravity: {{ gravity_display }} m/s². Atmosphere: <span class="text-yellow-300">{{ drag_info }}</span>
-                </p>
-                <p class="text-sm mt-2 text-red-300">
-                    Current Velocity: **{{ state.velocity_display }} km/s**. You must reduce this below 0.05 km/s.
-                </p>
-            </div>
-
-            <div class="bg-gray-800 p-8 rounded-xl w-full max-w-2xl mt-6 shadow-2xl">
-                <h3 class="text-2xl font-bold mb-4 text-center">Set Retro-Burn Duration</h3>
-                
-                <form action="{{ url_for('land') }}" method="post">
-                    <p class="text-center text-gray-300 mb-4">
-                        Burn duration controls the braking force. (Current Fuel: {{ state.fuel_display }})
-                    </p>
-
-                    <div class="mb-8">
-                        <label for="landingBurnSlider" class="block text-lg font-medium text-white mb-2">Retro-Burn Duration (Seconds): <span id="landing-burn-value" class="text-yellow-400">5</span>s</label>
-                        <input type="range" id="landingBurnSlider" name="burn_duration" min="0" max="15" step="1" value="5" class="w-full h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer">
-                    </div>
-
-                    <button type="submit" class="w-full py-3 px-6 bg-red-600 hover:bg-red-700 text-white font-extrabold text-xl rounded-lg shadow-lg transition duration-200">
-                        Engage Retro-Thrusters
-                    </button>
-                </form>
-            </div>
-            <script>
-                document.getElementById('landingBurnSlider').addEventListener('input', (e) => {
-                    document.getElementById('landing-burn-value').textContent = e.target.value;
-                });
-            </script>
-        {% endif %}
-
-        <!-- --- 5. Data Collection Screen (Placeholder) --- -->
-        {% if state.status == 'SURFACE_DATA' %}
-            <div class="max-w-4xl mx-auto text-center py-6">
-                <h2 class="text-3xl md:text-4xl font-bold mb-2 text-emerald-400">Phase 4: Data Collection</h2>
-                <p class="text-xl font-semibold text-white mb-4">Mission Success is within reach!</p>
-                <p class="text-lg text-gray-400">
-                    You have successfully landed on {{ state.target_planet_data.name }}. Initiate data collection systems now! This will consume fuel for scientific equipment.
-                </p>
-            </div>
-            <div class="bg-gray-800 p-8 rounded-xl w-full max-w-2xl mt-6 shadow-2xl">
-                <form action="{{ url_for('collect') }}" method="post">
-                    <p class="text-center text-gray-300 mb-6">
-                        Fuel remaining: {{ state.fuel_display }}. Required fuel for data collection: 50 units.
-                    </p>
-                    <button type="submit" class="w-full py-3 px-6 bg-green-500 hover:bg-green-600 text-white font-extrabold text-xl rounded-lg shadow-lg transition duration-200">
-                        Collect Data & Prepare for Return
-                    </button>
-                </form>
-            </div>
-        {% endif %}
-        
-        <!-- --- 6. Return Home Screen (Final Check) --- -->
-        {% if state.status == 'RETURN_PREP' %}
-            <div class="max-w-4xl mx-auto text-center py-6">
-                <h2 class="text-3xl md:text-4xl font-bold mb-2 text-indigo-400">Phase 5: Return to Earth</h2>
-                <p class="text-xl font-semibold text-white mb-4">Final Check: Can we make it home?</p>
-                <p class="text-lg text-gray-400">
-                    Data collected: {{ state.collected_data_units }} / {{ state.required_data_units }}. You have the required data!
-                </p>
-            </div>
-            <div class="bg-gray-800 p-8 rounded-xl w-full max-w-2xl mt-6 shadow-2xl">
-                <form action="{{ url_for('return_ship') }}" method="post">
-                    <p class="text-center text-gray-300 mb-6">
-                        Fuel remaining: {{ state.fuel_display }}. Required fuel for return burn: 100 units.
-                    </p>
-                    <button type="submit" class="w-full py-3 px-6 bg-blue-500 hover:bg-blue-600 text-white font-extrabold text-xl rounded-lg shadow-lg transition duration-200">
-                        Initiate Return Burn (Final Step!)
-                    </button>
-                </form>
-            </div>
-        {% endif %}
-
-    </main>
-
-    <!-- AI Tutor Button (Shown when target is set) -->
-    {% if state.target_planet_data %}
-    <button id="ai-tutor-button" onclick="openAiTutor()"
-        class="fixed bottom-6 right-6 p-4 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold shadow-2xl transition duration-300 z-50 transform hover:scale-105">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6">
-            <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/>
-            <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
-            <line x1="12" x2="12" y1="19" y2="22"/>
-        </svg>
-    </button>
-    {% endif %}
-
-    <!-- AI Tutor Modal -->
-    <div id="ai-tutor-modal" class="hidden fixed inset-0 z-40 bg-black bg-opacity-75 flex items-center justify-center p-4">
-        <div class="bg-gray-900 rounded-xl shadow-2xl w-full max-w-lg h-full max-h-[80vh] flex flex-col">
-            <!-- Modal Header -->
-            <div class="flex justify-between items-center p-4 border-b border-gray-700 bg-gray-800 rounded-t-xl">
-                <h2 class="text-2xl font-bold text-indigo-400">🤖 SABRINA: AI Mission Tutor</h2>
-                <button onclick="closeAiTutor()" class="text-gray-400 hover:text-white p-1 rounded-full hover:bg-gray-700">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                </button>
-            </div>
-            
-            <!-- Chat Output Area -->
-            <div id="ai-tutor-output" class="flex-grow p-4 space-y-3 overflow-y-auto flex flex-col">
-                <div class="mb-2 p-3 rounded-lg bg-emerald-900/50 self-start max-w-xs md:max-w-md">
-                    🤖 SABRINA: Welcome! I'm your AI Mission Tutor. Ask me anything about gravity, propulsion, or the current phase of our mission!
-                </div>
-            </div>
-
-            <!-- Loading Indicator -->
-            <div id="ai-tutor-loading" class="text-center p-2 hidden">
-                <p class="text-indigo-400 animate-pulse">SABRINA is calculating... (Using Google Search for context)</p>
-            </div>
-
-            <!-- Input Area -->
-            <div class="p-4 border-t border-gray-700 flex gap-2">
-                <input type="text" id="ai-tutor-input" placeholder="Ask SABRINA a question..."
-                    class="flex-grow p-3 rounded-lg bg-gray-700 text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    onkeydown="if(event.key === 'Enter') handleAiQuery()">
-                <button onclick="handleAiQuery()"
-                    class="p-3 bg-indigo-600 hover:bg-indigo-700 rounded-lg text-white font-semibold transition duration-200">
-                    Send
-                </button>
-            </div>
-        </div>
-    </div>
+    </script>
 </body>
 </html>
