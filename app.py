@@ -1,7 +1,7 @@
 import os
 import random
 from flask import Flask, render_template, request, redirect, url_for, jsonify, session
-from mission_core import MissionState, launch_step, cruise_step, landing_step, collect_data, return_home, EXOPLANETS # <-- Import necessary logic
+from mission_core import MissionState, launch_step, cruise_step, landing_step, collect_data, return_home, EXOPLANETS, SPECTROSCOPY_ELEMENTS, get_spectroscopy_data, assess_atmosphere # <-- Import necessary logic
 
 # Initialize the Flask application
 app = Flask(__name__)
@@ -33,8 +33,8 @@ def generate_space_name(name):
 @app.route('/', methods=['GET'])
 def home():
     """Displays the current mission status and controls."""
-    # Check if user has entered their name
-    if 'user_name' not in session or 'space_name' not in session:
+    # Check if user has entered their name - redirect to welcome if not
+    if not session.get('user_name') or not session.get('space_name'):
         return redirect(url_for('welcome'))
     
     # Ensure mission is in SELECTION state if no planet is selected or if in terminal state
@@ -132,6 +132,65 @@ def land():
     return redirect(url_for('home'))
 
 
+@app.route('/spectroscopy', methods=['GET'])
+def spectroscopy():
+    """Shows the spectroscopy activity page."""
+    if mission.status != 'SURFACE_DATA':
+        return redirect(url_for('home'))
+    
+    state = mission.get_current_state()
+    planet_key = mission.target_planet_key
+    spectroscopy_data = get_spectroscopy_data(planet_key) if planet_key else None
+    
+    return render_template('spectroscopy.html', 
+                         state=state, 
+                         spectroscopy_data=spectroscopy_data,
+                         elements_data=SPECTROSCOPY_ELEMENTS,
+                         user_name=session.get('user_name'),
+                         space_name=session.get('space_name'))
+
+@app.route('/spectroscopy_complete', methods=['POST'])
+def spectroscopy_complete():
+    """Handles completion of spectroscopy activity."""
+    if mission.status != 'SURFACE_DATA':
+        return redirect(url_for('home'))
+    
+    # Mark spectroscopy as completed
+    mission.spectroscopy_completed = True
+    # Add bonus data units for completing spectroscopy
+    mission.collected_data_units += 10
+    
+    return redirect(url_for('home'))
+
+@app.route('/transit_photometry', methods=['GET'])
+def transit_photometry():
+    """Shows the transit photometry activity page."""
+    if mission.status != 'SURFACE_DATA':
+        return redirect(url_for('home'))
+    
+    state = mission.get_current_state()
+    planet_key = mission.target_planet_key
+    planet_data = EXOPLANETS.get(planet_key) if planet_key else None
+    
+    return render_template('transit_photometry.html', 
+                         state=state, 
+                         planet_data=planet_data,
+                         user_name=session.get('user_name'),
+                         space_name=session.get('space_name'))
+
+@app.route('/transit_photometry_complete', methods=['POST'])
+def transit_photometry_complete():
+    """Handles completion of transit photometry activity."""
+    if mission.status != 'SURFACE_DATA':
+        return redirect(url_for('home'))
+    
+    # Mark transit photometry as completed
+    mission.transit_photometry_completed = True
+    # Add bonus data units for completing transit photometry
+    mission.collected_data_units += 10
+    
+    return redirect(url_for('home'))
+
 @app.route('/collect', methods=['POST'])
 def collect():
     """Handles the action to collect data on the surface."""
@@ -149,7 +208,19 @@ def return_ship():
 def reset_mission():
     """Resets the mission to selection state."""
     mission.__init__()  # Reset to initial SELECTION state
+    # Preserve user session data
+    if 'user_name' in session:
+        session['user_name'] = session['user_name']
+    if 'space_name' in session:
+        session['space_name'] = session['space_name']
     return redirect(url_for('home'))
+
+@app.route('/restart', methods=['GET', 'POST'])
+def restart():
+    """Clears session and returns to welcome page."""
+    session.clear()
+    mission.__init__()  # Reset mission state
+    return redirect(url_for('welcome'))
 
 
 # --- API Endpoint for the Client-Side AI Tutor ---

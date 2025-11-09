@@ -24,29 +24,156 @@ EXOPLANETS = {
         "icon": "🚀", "bgColor": "bg-indigo-900", "focus": "Orbital Mechanics & Scale",
         # Scaled down by 100 for gameplay: 1.5B km -> 15M km (takes ~2-3 steps at 8-10 km/s)
         "simDistanceKm": 15000000, "gravityFactor": 0.8, "atmosphereDrag": 0.1,
+        "atmosphere_elements": ["Nitrogen", "Methane", "Argon"],  # Elements in atmosphere for spectroscopy
+        "transit_depth": 0.008,  # Dip depth (0.8% brightness drop) - small moon
+        "transit_duration_hours": 2.5,  # Transit duration in hours
+        "orbital_period_days": 12.5,  # Days between transits
+        "planet_star_radius_ratio": 0.089,  # Rp/Rs ratio (calculated from depth)
     },
     "TerraNova": {
         "name": "Terra Nova", "type": "Rocky Super-Earth", "distance": "40 Light Years",
         "icon": "🌋", "bgColor": "bg-red-900", "focus": "Gravity & Thrust",
         # Scaled down: 4B km -> 40M km (takes ~5-6 steps at 8-10 km/s)
         "simDistanceKm": 40000000, "gravityFactor": 2.5, "atmosphereDrag": 0.5,
+        "atmosphere_elements": ["Carbon Dioxide", "Sulfur Dioxide", "Nitrogen"],
+        "transit_depth": 0.015,  # Dip depth (1.5% brightness drop) - larger planet
+        "transit_duration_hours": 4.0,
+        "orbital_period_days": 18.0,
+        "planet_star_radius_ratio": 0.122,  # Rp/Rs ratio
     },
     "Kyperus": {
         "name": "Kyperus", "type": "Ocean World", "distance": "22 Light Years",
         "icon": "🌊", "bgColor": "bg-blue-900", "focus": "Atmosphere & Pressure",
         # Scaled down: 2.2B km -> 22M km (takes ~3-4 steps at 8-10 km/s)
         "simDistanceKm": 22000000, "gravityFactor": 1.2, "atmosphereDrag": 3.0,
+        "atmosphere_elements": ["Water Vapor", "Oxygen", "Nitrogen"],
+        "transit_depth": 0.012,  # Dip depth (1.2% brightness drop) - medium planet
+        "transit_duration_hours": 3.2,
+        "orbital_period_days": 15.0,
+        "planet_star_radius_ratio": 0.110,  # Rp/Rs ratio
     }
 }
+
+# Spectroscopy data: Wavelength positions (in nanometers) for absorption lines
+SPECTROSCOPY_ELEMENTS = {
+    "Nitrogen": {"wavelengths": [337, 358, 380, 410], "color": "#64ffda", "description": "Common in many planetary atmospheres", "category": "temperature_control", "habitability": "neutral"},
+    "Oxygen": {"wavelengths": [630, 636, 690, 760], "color": "#00bcd4", "description": "Essential for life as we know it", "category": "habitable", "habitability": "positive"},
+    "Carbon Dioxide": {"wavelengths": [430, 500, 570, 650], "color": "#ff6b9d", "description": "Greenhouse gas, traps heat", "category": "greenhouse", "habitability": "moderate"},
+    "Methane": {"wavelengths": [340, 380, 420, 450], "color": "#f8b500", "description": "Can indicate biological activity", "category": "habitable", "habitability": "positive"},
+    "Water Vapor": {"wavelengths": [720, 820, 940, 1130], "color": "#00e676", "description": "Essential for life", "category": "habitable", "habitability": "positive"},
+    "Sulfur Dioxide": {"wavelengths": [280, 310, 340, 370], "color": "#ff9800", "description": "Volcanic activity indicator", "category": "poisonous", "habitability": "negative"},
+    "Argon": {"wavelengths": [750, 800, 850, 900], "color": "#9c27b0", "description": "Noble gas, very stable", "category": "neutral", "habitability": "neutral"},
+}
+
+def assess_atmosphere(elements):
+    """Assess the habitability and characteristics of a planet based on detected elements."""
+    assessment = {
+        "habitability_score": 0,
+        "habitable": False,
+        "temperature_control": False,
+        "poisonous": False,
+        "greenhouse_effect": False,
+        "findings": [],
+        "conclusion": "",
+        "recommendation": ""
+    }
+    
+    # Check for habitable elements
+    habitable_elements = ["Oxygen", "Water Vapor", "Methane"]
+    found_habitable = [e for e in elements if e in habitable_elements]
+    
+    if "Oxygen" in elements:
+        assessment["habitability_score"] += 3
+        assessment["findings"].append("✅ Oxygen detected! Essential for human breathing.")
+    if "Water Vapor" in elements:
+        assessment["habitability_score"] += 3
+        assessment["findings"].append("✅ Water Vapor found! Water is crucial for life.")
+    if "Methane" in elements:
+        assessment["habitability_score"] += 2
+        assessment["findings"].append("🔬 Methane detected! Could indicate biological activity.")
+    
+    # Check for temperature control
+    if "Nitrogen" in elements:
+        assessment["temperature_control"] = True
+        assessment["habitability_score"] += 1
+        assessment["findings"].append("🌡️ Nitrogen present - helps regulate temperature.")
+    
+    # Check for poisonous elements
+    if "Sulfur Dioxide" in elements:
+        assessment["poisonous"] = True
+        assessment["habitability_score"] -= 2
+        assessment["findings"].append("⚠️ Sulfur Dioxide detected - TOXIC! Indicates volcanic activity.")
+    
+    # Check for greenhouse effect
+    if "Carbon Dioxide" in elements:
+        assessment["greenhouse_effect"] = True
+        assessment["habitability_score"] += 1
+        assessment["findings"].append("🌍 Carbon Dioxide found - creates greenhouse effect (traps heat).")
+    
+    # Determine overall habitability
+    if assessment["habitability_score"] >= 5:
+        assessment["habitable"] = True
+        assessment["conclusion"] = "🌟 This planet shows PROMISING signs for potential habitability!"
+        assessment["recommendation"] = "Consider this planet for future colonization missions. Further exploration recommended!"
+    elif assessment["habitability_score"] >= 3:
+        assessment["habitable"] = "moderate"
+        assessment["conclusion"] = "🔍 This planet has MIXED characteristics - some promising, some concerning."
+        assessment["recommendation"] = "More detailed analysis needed. Could be habitable with proper equipment."
+    else:
+        assessment["habitable"] = False
+        assessment["conclusion"] = "❌ This planet appears UNSUITABLE for human habitation."
+        assessment["recommendation"] = "Not recommended for colonization. May be useful for scientific research only."
+    
+    return assessment
+
+def get_spectroscopy_data(planet_key):
+    """Generate spectroscopy data for a planet."""
+    if planet_key not in EXOPLANETS:
+        return None
+    
+    planet = EXOPLANETS[planet_key]
+    elements = planet.get("atmosphere_elements", [])
+    
+    # Generate spectrum data with absorption lines
+    spectrum = []
+    all_wavelengths = []
+    
+    for element in elements:
+        if element in SPECTROSCOPY_ELEMENTS:
+            element_data = SPECTROSCOPY_ELEMENTS[element]
+            all_wavelengths.extend(element_data["wavelengths"])
+    
+    # Create spectrum from 300nm to 1200nm
+    for wavelength in range(300, 1201, 5):
+        intensity = 100  # Base intensity
+        
+        # Add absorption lines (reduce intensity at specific wavelengths)
+        for element in elements:
+            if element in SPECTROSCOPY_ELEMENTS:
+                element_wavelengths = SPECTROSCOPY_ELEMENTS[element]["wavelengths"]
+                for elem_wl in element_wavelengths:
+                    if abs(wavelength - elem_wl) < 3:  # Absorption line width
+                        intensity -= 30  # Absorption depth
+        
+        intensity = max(10, intensity)  # Minimum intensity
+        spectrum.append({"wavelength": wavelength, "intensity": intensity})
+    
+    return {
+        "elements": elements,
+        "spectrum": spectrum,
+        "all_wavelengths": sorted(set(all_wavelengths))
+    }
 
 # --- STATE CLASS ---
 
 class MissionState:
     """Tracks all the critical variables for the space mission."""
     def __init__(self):
-        self.status = "SELECTION"       # SELECTION, PRE_LAUNCH, CRUISING, LANDING_PREP, SURFACE_DATA, RETURN_PREP, SUCCESS, FAILURE
+        self.status = "SELECTION"       # SELECTION, PRE_LAUNCH, CRUISING, LANDING_PREP, SURFACE_DATA, SPECTROSCOPY, RETURN_PREP, SUCCESS, FAILURE
         self.error_code = None          # Stores a specific error code
         self.mission_day = 0            # Tracks time/steps taken
+        self.spectroscopy_completed = False  # Track if spectroscopy activity is done
+        self.transit_photometry_completed = False  # Track if transit photometry activity is done
 
         self.initial_fuel = 1000
         self.fuel = self.initial_fuel

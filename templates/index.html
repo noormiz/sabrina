@@ -1900,6 +1900,34 @@
                         </div>
                     </div>
                     
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 20px;">
+                        <div class="edu-card" style="background: rgba(100, 255, 218, 0.15); border-color: rgba(100, 255, 218, 0.4);">
+                            <div class="edu-card-title">🔬 Optional: Atmospheric Spectroscopy</div>
+                            <div class="edu-card-content">
+                                Analyze light spectra to identify elements in {{ state.target_planet_data.name }}'s atmosphere!<br><br>
+                                <a href="{{ url_for('spectroscopy') }}" class="btn" style="padding: 12px 25px; font-size: 1em; text-decoration: none; display: inline-block; margin-top: 10px;">
+                                    🌈 Start Spectroscopy
+                                </a>
+                                {% if state.spectroscopy_completed %}
+                                <p style="color: #00e676; margin-top: 10px; font-weight: bold; font-size: 0.9em;">✅ Completed! +10 data units</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="edu-card" style="background: rgba(248, 181, 0, 0.15); border-color: rgba(248, 181, 0, 0.4);">
+                            <div class="edu-card-title">🔭 Optional: Transit Photometry</div>
+                            <div class="edu-card-content">
+                                Measure the light curve to calculate {{ state.target_planet_data.name }}'s size relative to its star!<br><br>
+                                <a href="{{ url_for('transit_photometry') }}" class="btn" style="padding: 12px 25px; font-size: 1em; text-decoration: none; display: inline-block; margin-top: 10px; background: linear-gradient(135deg, #f8b500, #ff9800);">
+                                    🔭 Start Photometry
+                                </a>
+                                {% if state.transit_photometry_completed %}
+                                <p style="color: #00e676; margin-top: 10px; font-weight: bold; font-size: 0.9em;">✅ Completed! +10 data units</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
                     <form method="POST" action="{{ url_for('collect') }}" style="display: flex; flex-direction: column; flex: 1; justify-content: center;">
                         <div style="text-align: center; margin-bottom: 20px; padding: 15px; background: rgba(0, 230, 118, 0.1); border-radius: 10px; border: 2px solid rgba(0, 230, 118, 0.3);">
                             <p style="color: #00e676; font-weight: bold; margin-bottom: 8px;">Fuel Required: 50 units</p>
@@ -2127,7 +2155,7 @@
                 <!-- Quick Start Guide -->
                 <div class="learn-more" onclick="this.classList.toggle('expanded')" style="max-width: 800px; margin: 0 auto 30px;">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <strong style="color: #64ffda; font-size: 1.2em;">📖 How to Play - Quick Guide</strong>
+                        <strong style="color: #64ffda; font-size: 1.2em;">📖 How to Navigate</strong>
                         <span style="color: #64ffda; font-size: 1.5em;">▼</span>
                     </div>
                     <div class="learn-more-content">
