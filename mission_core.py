@@ -21,7 +21,7 @@ SIM_CONSTANTS = {
 EXOPLANETS = {
     "Aetheria": {
         "name": "Aetheria", "type": "Frozen Moon", "distance": "15 Light Years",
-        "icon": "🚀", "bgColor": "bg-indigo-900", "focus": "Orbital Mechanics & Scale",
+        "icon": "🌙", "bgColor": "bg-indigo-900", "focus": "Orbital Mechanics & Scale",
         # Scaled down by 100 for gameplay: 1.5B km -> 15M km (takes ~2-3 steps at 8-10 km/s)
         "simDistanceKm": 15000000, "gravityFactor": 0.8, "atmosphereDrag": 0.1,
         "atmosphere_elements": ["Nitrogen", "Methane", "Argon"],  # Elements in atmosphere for spectroscopy
@@ -32,7 +32,7 @@ EXOPLANETS = {
     },
     "TerraNova": {
         "name": "Terra Nova", "type": "Rocky Super-Earth", "distance": "40 Light Years",
-        "icon": "🌋", "bgColor": "bg-red-900", "focus": "Gravity & Thrust",
+        "icon": "🪐", "bgColor": "bg-red-900", "focus": "Gravity & Thrust",
         # Scaled down: 4B km -> 40M km (takes ~5-6 steps at 8-10 km/s)
         "simDistanceKm": 40000000, "gravityFactor": 2.5, "atmosphereDrag": 0.5,
         "atmosphere_elements": ["Carbon Dioxide", "Sulfur Dioxide", "Nitrogen"],

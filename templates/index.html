@@ -1538,6 +1538,30 @@
                         </p>
                     </div>
                     
+                    <!-- Pre-Launch Visualization -->
+                    {% if state.target_planet_data %}
+                    <div style="margin: 25px 0; padding: 25px; background: rgba(0, 0, 0, 0.4); border-radius: 20px; border: 3px solid rgba(248, 181, 0, 0.3);">
+                        <div style="text-align: center; margin-bottom: 15px; font-family: 'Orbitron', sans-serif; color: #f8b500; font-size: 1.3em; font-weight: bold;">
+                            🚀 Launch Preparation
+                        </div>
+                        <div id="launch-visualization" style="position: relative; width: 100%; height: 300px; background: linear-gradient(135deg, #0a0e27 0%, #1a1a2e 50%, #16213e 100%); border-radius: 15px; overflow: hidden; border: 2px solid rgba(248, 181, 0, 0.2);">
+                            <svg id="launch-svg" width="100%" height="100%" style="position: absolute; top: 0; left: 0;">
+                                <!-- Launch visualization will be drawn here -->
+                            </svg>
+                            <!-- Earth -->
+                            <div id="launch-earth" style="position: absolute; left: 50%; bottom: 20px; transform: translateX(-50%); font-size: 4em; z-index: 10; filter: drop-shadow(0 0 15px rgba(100, 200, 255, 0.8));">🌍</div>
+                            <!-- Rocket on launch pad -->
+                            <div id="launch-rocket" style="position: absolute; left: 50%; bottom: 60px; transform: translateX(-50%); font-size: 2.5em; z-index: 15; filter: drop-shadow(0 0 20px rgba(248, 181, 0, 1));">🚀</div>
+                            <!-- Target Planet in distance -->
+                            <div id="launch-target" style="position: absolute; right: 30px; top: 30px; font-size: 2.5em; z-index: 10; filter: drop-shadow(0 0 15px rgba(100, 255, 218, 0.8));">{{ state.target_planet_data.icon }}</div>
+                            <!-- Label -->
+                            <div style="position: absolute; top: 15px; left: 50%; transform: translateX(-50%); font-family: 'Orbitron', sans-serif; color: #f8b500; font-size: 1em; font-weight: bold; text-shadow: 0 0 10px rgba(248, 181, 0, 0.8); z-index: 20;">
+                                Destination: {{ state.target_planet_data.name }}
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
                     <!-- Educational Concept Box -->
                     <div class="concept-box">
                         <div class="concept-box-title">🧠 Science Concept: Newton's Laws</div>
@@ -1654,6 +1678,30 @@
                         </p>
                     </div>
                     
+                    <!-- 2D Trajectory Visualization -->
+                    {% if state.target_planet_data %}
+                    <div style="margin: 25px 0; padding: 25px; background: rgba(0, 0, 0, 0.4); border-radius: 20px; border: 3px solid rgba(100, 255, 218, 0.3);">
+                        <div style="text-align: center; margin-bottom: 15px; font-family: 'Orbitron', sans-serif; color: #64ffda; font-size: 1.3em; font-weight: bold;">
+                            🛰️ Mission Trajectory
+                        </div>
+                        <div id="trajectory-container" style="position: relative; width: 100%; height: 300px; background: linear-gradient(135deg, #0a0e27 0%, #1a1a2e 50%, #16213e 100%); border-radius: 15px; overflow: hidden; border: 2px solid rgba(100, 255, 218, 0.2);">
+                            <svg id="trajectory-svg" width="100%" height="100%" style="position: absolute; top: 0; left: 0;">
+                                <!-- Trajectory path will be drawn here -->
+                            </svg>
+                            <!-- Earth -->
+                            <div id="earth-marker" style="position: absolute; left: 30px; top: 50%; transform: translateY(-50%); font-size: 3em; z-index: 10; filter: drop-shadow(0 0 15px rgba(100, 200, 255, 0.8));">🌍</div>
+                            <!-- Rocket -->
+                            <div id="rocket-marker" style="position: absolute; font-size: 2.5em; z-index: 15; filter: drop-shadow(0 0 20px rgba(248, 181, 0, 1)); transition: all 0.5s ease-out;">🚀</div>
+                            <!-- Target Planet -->
+                            <div id="planet-marker" style="position: absolute; right: 30px; top: 50%; transform: translateY(-50%); font-size: 3em; z-index: 10; filter: drop-shadow(0 0 15px rgba(100, 255, 218, 0.8));">{{ state.target_planet_data.icon }}</div>
+                            <!-- Progress label -->
+                            <div id="progress-label" style="position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%); font-family: 'Orbitron', sans-serif; color: #64ffda; font-size: 1.1em; font-weight: bold; text-shadow: 0 0 10px rgba(100, 255, 218, 0.8); z-index: 20;">
+                                {{ ((state.altitude_km / state.target_distance_km) * 100) | round }}% Complete
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
                     <div class="concept-box">
                         <div class="concept-box-title">🧠 Science Concept: Inertia & Course Corrections</div>
                         <div class="concept-box-content">
@@ -1762,6 +1810,28 @@
                             {% endif %}
                         </p>
                     </div>
+                    
+                    <!-- Landing Visualization -->
+                    {% if state.target_planet_data %}
+                    <div style="margin: 25px 0; padding: 25px; background: rgba(0, 0, 0, 0.4); border-radius: 20px; border: 3px solid rgba(255, 107, 157, 0.3);">
+                        <div style="text-align: center; margin-bottom: 15px; font-family: 'Orbitron', sans-serif; color: #ff6b9d; font-size: 1.3em; font-weight: bold;">
+                            🛸 Landing Approach
+                        </div>
+                        <div id="landing-visualization" style="position: relative; width: 100%; height: 300px; background: linear-gradient(135deg, #0a0e27 0%, #1a1a2e 50%, #16213e 100%); border-radius: 15px; overflow: hidden; border: 2px solid rgba(255, 107, 157, 0.2);">
+                            <svg id="landing-svg" width="100%" height="100%" style="position: absolute; top: 0; left: 0;">
+                                <!-- Landing trajectory will be drawn here -->
+                            </svg>
+                            <!-- Target Planet -->
+                            <div id="landing-planet" style="position: absolute; right: 30px; bottom: 20px; font-size: 4em; z-index: 10; filter: drop-shadow(0 0 15px rgba(100, 255, 218, 0.8));">{{ state.target_planet_data.icon }}</div>
+                            <!-- Rocket approaching -->
+                            <div id="landing-rocket" style="position: absolute; font-size: 2.5em; z-index: 15; filter: drop-shadow(0 0 20px rgba(255, 107, 157, 1)); transition: all 0.5s ease-out;">🚀</div>
+                            <!-- Velocity indicator -->
+                            <div id="velocity-indicator" style="position: absolute; top: 15px; left: 50%; transform: translateX(-50%); font-family: 'Orbitron', sans-serif; color: #ff6b9d; font-size: 1.1em; font-weight: bold; text-shadow: 0 0 10px rgba(255, 107, 157, 0.8); z-index: 20;">
+                                Velocity: {{ state.velocity_km_s | round(2) }} km/s
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
                     
                     <div class="concept-box">
                         <div class="concept-box-title">🧠 Science Concept: Deceleration & Landing</div>
@@ -2376,7 +2446,189 @@
                 card.style.animationDelay = `${index * 0.1}s`;
                 card.classList.add('slide-in');
             });
+            
+            // Draw visualizations for different phases
+            drawTrajectory();
+            drawLaunchVisualization();
+            drawLandingVisualization();
         });
+        
+        function drawTrajectory() {
+            const container = document.getElementById('trajectory-container');
+            const svg = document.getElementById('trajectory-svg');
+            const rocket = document.getElementById('rocket-marker');
+            
+            if (!container || !svg || !rocket) return;
+            
+            const containerWidth = container.offsetWidth;
+            const containerHeight = container.offsetHeight;
+            {% if state.status == 'CRUISING' and state.target_planet_data %}
+            const cruiseProgress = {{ (state.altitude_km / state.target_distance_km) }};
+            {% else %}
+            const cruiseProgress = 0;
+            {% endif %}
+            
+            // Clear previous path
+            svg.innerHTML = '';
+            
+            // Calculate positions
+            const cruiseStartX = 60; // Earth position (left)
+            const cruiseEndX = containerWidth - 60; // Planet position (right)
+            const cruiseCenterY = containerHeight / 2;
+            
+            // Create curved trajectory path (Hohmann transfer-like curve)
+            const cruiseControlY = cruiseCenterY - 80; // Curve upward
+            const cruisePath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            const cruisePathData = `M ${cruiseStartX} ${cruiseCenterY} Q ${(cruiseStartX + cruiseEndX) / 2} ${cruiseControlY} ${cruiseEndX} ${cruiseCenterY}`;
+            cruisePath.setAttribute('d', cruisePathData);
+            cruisePath.setAttribute('stroke', '#64ffda');
+            cruisePath.setAttribute('stroke-width', '3');
+            cruisePath.setAttribute('fill', 'none');
+            cruisePath.setAttribute('stroke-dasharray', '5,5');
+            cruisePath.setAttribute('opacity', '0.6');
+            cruisePath.style.filter = 'drop-shadow(0 0 5px rgba(100, 255, 218, 0.5))';
+            svg.appendChild(cruisePath);
+            
+            // Calculate rocket position along the curve
+            const cruiseT = Math.min(1, Math.max(0, cruiseProgress)); // Clamp between 0 and 1
+            const cruiseRocketX = cruiseStartX + (cruiseEndX - cruiseStartX) * cruiseT;
+            // Quadratic curve calculation: y = (1-t)²y0 + 2(1-t)ty1 + t²y2
+            const cruiseRocketY = cruiseCenterY * Math.pow(1 - cruiseT, 2) + cruiseControlY * 2 * (1 - cruiseT) * cruiseT + cruiseCenterY * Math.pow(cruiseT, 2);
+            
+            // Position rocket
+            rocket.style.left = (cruiseRocketX - 20) + 'px';
+            rocket.style.top = (cruiseRocketY - 20) + 'px';
+            
+            // Add rotation to rocket based on trajectory direction
+            const cruiseAngle = Math.atan2(cruiseControlY - cruiseCenterY, (cruiseEndX - cruiseStartX) / 2) * (180 / Math.PI);
+            rocket.style.transform = `rotate(${cruiseAngle * cruiseT}deg)`;
+            
+            // Add stars in background
+            for (let i = 0; i < 20; i++) {
+                const star = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                const x = Math.random() * containerWidth;
+                const y = Math.random() * containerHeight;
+                star.setAttribute('cx', x);
+                star.setAttribute('cy', y);
+                star.setAttribute('r', Math.random() * 2 + 1);
+                star.setAttribute('fill', '#ffffff');
+                star.setAttribute('opacity', '0.6');
+                svg.appendChild(star);
+            }
+        }
+        
+        function drawLaunchVisualization() {
+            const container = document.getElementById('launch-visualization');
+            const svg = document.getElementById('launch-svg');
+            
+            if (!container || !svg) return;
+            
+            const containerWidth = container.offsetWidth;
+            const containerHeight = container.offsetHeight;
+            
+            // Clear previous
+            svg.innerHTML = '';
+            
+            // Draw escape trajectory arc (from Earth upward and outward)
+            const launchEarthX = containerWidth / 2;
+            const launchEarthY = containerHeight - 60;
+            const launchTargetX = containerWidth - 60;
+            const launchTargetY = 50;
+            
+            // Create escape trajectory path (curved upward from Earth)
+            const launchPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            const launchControlX = launchEarthX + 100;
+            const launchControlY = launchEarthY - 150;
+            const launchPathData = `M ${launchEarthX} ${launchEarthY} Q ${launchControlX} ${launchControlY} ${launchTargetX} ${launchTargetY}`;
+            launchPath.setAttribute('d', launchPathData);
+            launchPath.setAttribute('stroke', '#f8b500');
+            launchPath.setAttribute('stroke-width', '2');
+            launchPath.setAttribute('fill', 'none');
+            launchPath.setAttribute('stroke-dasharray', '5,5');
+            launchPath.setAttribute('opacity', '0.5');
+            launchPath.style.filter = 'drop-shadow(0 0 5px rgba(248, 181, 0, 0.5))';
+            svg.appendChild(launchPath);
+            
+            // Add stars
+            for (let i = 0; i < 15; i++) {
+                const star = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                const x = Math.random() * containerWidth;
+                const y = Math.random() * containerHeight;
+                star.setAttribute('cx', x);
+                star.setAttribute('cy', y);
+                star.setAttribute('r', Math.random() * 2 + 1);
+                star.setAttribute('fill', '#ffffff');
+                star.setAttribute('opacity', '0.6');
+                svg.appendChild(star);
+            }
+        }
+        
+        function drawLandingVisualization() {
+            const container = document.getElementById('landing-visualization');
+            const svg = document.getElementById('landing-svg');
+            const rocket = document.getElementById('landing-rocket');
+            
+            if (!container || !svg || !rocket) return;
+            
+            const containerWidth = container.offsetWidth;
+            const containerHeight = container.offsetHeight;
+            
+            let landingVelocityProgress = 0;
+            {% if state.status == 'LANDING_PREP' and state.target_planet_data %}
+            const landingCurrentVelocity = {{ state.velocity_km_s }};
+            // Calculate approach progress (inverse - higher velocity = further from planet)
+            landingVelocityProgress = Math.min(1, Math.max(0, 1 - (landingCurrentVelocity / 3.0))); // Normalize to 0-3 km/s range
+            {% endif %}
+            
+            // Clear previous
+            svg.innerHTML = '';
+            
+            // Calculate positions
+            const landingPlanetX = containerWidth - 60;
+            const landingPlanetY = containerHeight - 60;
+            const landingStartX = 60;
+            const landingStartY = 50;
+            
+            // Draw landing approach trajectory (curved descent)
+            const landingPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            const landingControlX = (landingStartX + landingPlanetX) / 2;
+            const landingControlY = containerHeight - 100;
+            const landingPathData = `M ${landingStartX} ${landingStartY} Q ${landingControlX} ${landingControlY} ${landingPlanetX} ${landingPlanetY}`;
+            landingPath.setAttribute('d', landingPathData);
+            landingPath.setAttribute('stroke', '#ff6b9d');
+            landingPath.setAttribute('stroke-width', '3');
+            landingPath.setAttribute('fill', 'none');
+            landingPath.setAttribute('stroke-dasharray', '5,5');
+            landingPath.setAttribute('opacity', '0.6');
+            landingPath.style.filter = 'drop-shadow(0 0 5px rgba(255, 107, 157, 0.5))';
+            svg.appendChild(landingPath);
+            
+            // Calculate rocket position along the descent curve
+            const landingT = Math.min(1, Math.max(0, landingVelocityProgress));
+            const landingRocketX = landingStartX + (landingPlanetX - landingStartX) * landingT;
+            const landingRocketY = landingStartY * Math.pow(1 - landingT, 2) + landingControlY * 2 * (1 - landingT) * landingT + landingPlanetY * Math.pow(landingT, 2);
+            
+            // Position rocket
+            rocket.style.left = (landingRocketX - 20) + 'px';
+            rocket.style.top = (landingRocketY - 20) + 'px';
+            
+            // Rotate rocket to follow descent path
+            const landingAngle = Math.atan2(landingPlanetY - landingStartY, landingPlanetX - landingStartX) * (180 / Math.PI) + 45;
+            rocket.style.transform = `rotate(${landingAngle}deg)`;
+            
+            // Add stars
+            for (let i = 0; i < 15; i++) {
+                const star = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                const x = Math.random() * containerWidth;
+                const y = Math.random() * containerHeight;
+                star.setAttribute('cx', x);
+                star.setAttribute('cy', y);
+                star.setAttribute('r', Math.random() * 2 + 1);
+                star.setAttribute('fill', '#ffffff');
+                star.setAttribute('opacity', '0.6');
+                svg.appendChild(star);
+            }
+        }
 
         // AI Tutor Functions
         let currentStatus = '{{ state.status }}';
