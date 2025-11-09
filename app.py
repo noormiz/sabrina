@@ -1,9 +1,11 @@
 import os
-from flask import Flask, render_template, request, redirect, url_for, jsonify
+import random
+from flask import Flask, render_template, request, redirect, url_for, jsonify, session
 from mission_core import MissionState, launch_step, cruise_step, landing_step, collect_data, return_home, EXOPLANETS # <-- Import necessary logic
 
 # Initialize the Flask application
 app = Flask(__name__)
+app.secret_key = os.environ.get('SECRET_KEY', 'sabrina-space-mission-simulator-secret-key-2024')  # For session management
 
 # Get Gemini API key from environment variable (more secure than hardcoding)
 # Fallback to hardcoded key if env var not set (for development only)
@@ -12,9 +14,29 @@ GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', 'AIzaSyAx_kgy_uYyresWInzbHRHB_
 # Initialize the mission state globally so it persists across user actions
 mission = MissionState()
 
+def generate_space_name(name):
+    """Generate a fun space-related name for the user."""
+    titles = ['Commander', 'Captain', 'Astronaut', 'Pilot', 'Explorer', 'Navigator', 'Mission Specialist']
+    suffixes = ['of the Stars', 'Stellar', 'Cosmic', 'Galactic', 'Nebula', 'Orion', 'Apollo']
+    
+    # Use first name only
+    first_name = name.split()[0] if name else 'Explorer'
+    
+    # Randomly choose a title and sometimes add a suffix
+    title = random.choice(titles)
+    if random.random() > 0.5:  # 50% chance to add suffix
+        suffix = random.choice(suffixes)
+        return f"{title} {first_name} {suffix}"
+    else:
+        return f"{title} {first_name}"
+
 @app.route('/', methods=['GET'])
 def home():
     """Displays the current mission status and controls."""
+    # Check if user has entered their name
+    if 'user_name' not in session or 'space_name' not in session:
+        return redirect(url_for('welcome'))
+    
     # Ensure mission is in SELECTION state if no planet is selected or if in terminal state
     if mission.target_planet_data is None:
         # If no planet selected, always show selection screen
@@ -26,7 +48,36 @@ def home():
     
     state = mission.get_current_state()
     # Pass necessary planet data and API key to the template for the selection screen
-    return render_template('index.html', state=state, exoplanets=EXOPLANETS, gemini_api_key=GEMINI_API_KEY)
+    return render_template('index.html', state=state, exoplanets=EXOPLANETS, gemini_api_key=GEMINI_API_KEY, 
+                         user_name=session.get('user_name'), space_name=session.get('space_name'))
+
+@app.route('/welcome', methods=['GET', 'POST'])
+def welcome():
+    """Welcome page where users enter their name."""
+    if request.method == 'POST':
+        name = request.form.get('name', '').strip()
+        if name:
+            space_name = generate_space_name(name)
+            session['user_name'] = name
+            session['space_name'] = space_name
+            return redirect(url_for('welcome_intro'))
+        else:
+            # If no name provided, show error
+            return render_template('welcome.html', error="Please enter your name to begin your space adventure!")
+    
+    # GET request - show welcome form
+    return render_template('welcome.html')
+
+@app.route('/welcome_intro', methods=['GET'])
+def welcome_intro():
+    """Introduction page after name entry."""
+    if 'user_name' not in session or 'space_name' not in session:
+        return redirect(url_for('welcome'))
+    
+    return render_template('welcome_intro.html', 
+                         user_name=session.get('user_name'),
+                         space_name=session.get('space_name'),
+                         exoplanets=EXOPLANETS)
 
 @app.route('/select_planet', methods=['POST'])
 def select_planet_route():

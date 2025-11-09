@@ -1098,6 +1098,156 @@
             color: #ffffff;
             line-height: 1.6;
         }
+        
+        /* Success Celebration Animation */
+        @keyframes celebrate {
+            0%, 100% { transform: scale(1) rotate(0deg); }
+            25% { transform: scale(1.1) rotate(-5deg); }
+            50% { transform: scale(1.15) rotate(5deg); }
+            75% { transform: scale(1.1) rotate(-3deg); }
+        }
+        
+        .celebrate {
+            animation: celebrate 0.5s ease-in-out infinite;
+        }
+        
+        /* Confetti Effect */
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            background: #f8b500;
+            position: absolute;
+            animation: confetti-fall 3s linear infinite;
+        }
+        
+        @keyframes confetti-fall {
+            0% {
+                transform: translateY(-100vh) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh) rotate(720deg);
+                opacity: 0;
+            }
+        }
+        
+        /* Mission Statistics Card */
+        .mission-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            border: 2px solid rgba(100, 255, 218, 0.3);
+        }
+        
+        .stat-card {
+            text-align: center;
+            padding: 15px;
+            background: rgba(100, 255, 218, 0.1);
+            border-radius: 10px;
+            border: 1px solid rgba(100, 255, 218, 0.2);
+        }
+        
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #64ffda;
+            font-family: 'Orbitron', sans-serif;
+            margin: 10px 0;
+        }
+        
+        .stat-label {
+            font-size: 0.9em;
+            color: #b0bec5;
+        }
+        
+        /* Visual Feedback Animations */
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .slide-in {
+            animation: slideIn 0.5s ease-out;
+        }
+        
+        /* Rocket Animation */
+        @keyframes rocketLaunch {
+            0% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(-10px) scale(1.1); }
+            100% { transform: translateY(0) scale(1); }
+        }
+        
+        .rocket-launching {
+            animation: rocketLaunch 1s ease-in-out infinite;
+        }
+        
+        /* Progress Pulse */
+        @keyframes progressPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        .progress-pulse {
+            animation: progressPulse 2s ease-in-out infinite;
+        }
+        
+        /* Achievement Badge */
+        .achievement-badge {
+            display: inline-block;
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #f8b500, #ff6b9d);
+            border-radius: 25px;
+            margin: 5px;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(248, 181, 0, 0.5);
+            animation: slideIn 0.5s ease-out;
+        }
+        
+        /* Interactive Hover Effects */
+        .metric-card-compact:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 25px rgba(100, 255, 218, 0.4);
+            transition: all 0.3s;
+        }
+        
+        /* Visual Velocity Indicator */
+        .velocity-indicator {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        
+        .velocity-safe {
+            background: rgba(0, 230, 118, 0.3);
+            color: #00e676;
+            border: 2px solid #00e676;
+        }
+        
+        .velocity-warning {
+            background: rgba(248, 181, 0, 0.3);
+            color: #f8b500;
+            border: 2px solid #f8b500;
+        }
+        
+        .velocity-danger {
+            background: rgba(255, 107, 157, 0.3);
+            color: #ff6b9d;
+            border: 2px solid #ff6b9d;
+            animation: pulse 1s infinite;
+        }
     </style>
 </head>
 <body>
@@ -1110,6 +1260,9 @@
             <div class="header-content">
                 <h1>🚀 SABRINA 🚀</h1>
                 <p class="subtitle">Space Mission Simulator for Future Astronauts!</p>
+                {% if space_name %}
+                <p style="font-size: 0.9em; color: #f8b500; margin-top: 5px; font-weight: bold;">Mission Control: {{ space_name }}</p>
+                {% endif %}
             </div>
             {% if state.status != 'SELECTION' and state.target_planet_data %}
             <div class="header-info">
@@ -1121,15 +1274,69 @@
 
         <!-- Success/Failure Screens (Full Width) -->
         {% if state.status == 'SUCCESS' %}
-        <div class="status-card">
-            <div class="status-badge status-success">🎉 MISSION COMPLETE! 🎉</div>
+        <div class="status-card slide-in">
+            <div class="status-badge status-success celebrate">🎉 MISSION COMPLETE! 🎉</div>
             <div class="alert alert-success">
-                <h2 style="margin-bottom: 15px; font-size: 1.5em;">🌟 Awesome Job, Space Commander! 🌟</h2>
-                <p style="font-size: 1.1em; line-height: 1.6;">
+                <h2 style="margin-bottom: 15px; font-size: 1.5em;">🌟 Awesome Job, {% if space_name %}{{ space_name }}{% else %}Space Commander{% endif %}! 🌟</h2>
+                <p style="font-size: 1.1em; line-height: 1.6; margin-bottom: 20px;">
                     You successfully collected <strong>{{ state.collected_data_units }} units</strong> of valuable scientific data and returned home safely! 
                     Your mission planning and execution were outstanding! 🚀✨
                 </p>
-                <div style="text-align: center; margin-top: 20px;">
+                
+                <!-- Mission Statistics -->
+                <div class="mission-stats">
+                    <div class="stat-card">
+                        <div class="stat-label">⏱️ Mission Duration</div>
+                        <div class="stat-value">{{ state.mission_day }}</div>
+                        <div class="stat-label">days</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">⛽ Fuel Efficiency</div>
+                        <div class="stat-value">{{ ((state.fuel / state.initial_fuel) * 100) | round(0) | int }}%</div>
+                        <div class="stat-label">remaining</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">🔬 Data Collected</div>
+                        <div class="stat-value">{{ state.collected_data_units }}</div>
+                        <div class="stat-label">units</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">🪐 Planet Explored</div>
+                        <div class="stat-value" style="font-size: 1.5em;">{{ state.target_planet_data.icon if state.target_planet_data else '🌍' }}</div>
+                        <div class="stat-label">{{ state.target_planet_data.name if state.target_planet_data else 'Unknown' }}</div>
+                    </div>
+                </div>
+                
+                <!-- Achievements -->
+                <div style="margin: 20px 0; text-align: center;">
+                    <h3 style="color: #64ffda; margin-bottom: 15px; font-size: 1.3em;">🏆 Mission Achievements</h3>
+                    <div>
+                        <span class="achievement-badge">✅ Successful Landing</span>
+                        <span class="achievement-badge">📊 Data Collection Complete</span>
+                        <span class="achievement-badge">🏠 Safe Return</span>
+                        {% if state.fuel > state.initial_fuel * 0.3 %}
+                        <span class="achievement-badge">⛽ Fuel Efficient</span>
+                        {% endif %}
+                        {% if state.mission_day < 100 %}
+                        <span class="achievement-badge">⚡ Fast Mission</span>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Educational Summary -->
+                <div class="edu-card" style="margin-top: 20px;">
+                    <div class="edu-card-title">🎓 What You Learned</div>
+                    <div class="edu-card-content">
+                        <strong>Congratulations!</strong> You've mastered key space science concepts:<br>
+                        • <strong>Launch Physics:</strong> Understanding TWR and escape velocity<br>
+                        • <strong>Space Travel:</strong> Managing fuel and course corrections<br>
+                        • <strong>Landing:</strong> Precise velocity control and retro-burns<br>
+                        • <strong>Mission Planning:</strong> Balancing speed, fuel, and safety<br><br>
+                        <strong>Ready for your next challenge?</strong> Try a different planet to learn new concepts! 🚀
+                    </div>
+                </div>
+                
+                <div style="text-align: center; margin-top: 30px;">
                     <a href="{{ url_for('reset_mission') }}" class="btn btn-success" style="text-decoration: none; display: inline-block; max-width: 400px;">
                         <span>🚀 Launch Another Mission!</span>
                     </a>
@@ -1138,19 +1345,74 @@
         </div>
 
         {% elif state.status == 'FAILURE' %}
-        <div class="status-card">
+        <div class="status-card slide-in">
             <div class="status-badge status-failure">🚨 Mission Challenge 🚨</div>
             <div class="alert alert-danger">
                 <h2 style="margin-bottom: 15px; font-size: 1.5em;">Mission Day {{ state.mission_day }}</h2>
-                <p style="font-size: 1.1em; margin-bottom: 10px;"><strong>Challenge:</strong> {{ state.error_code }}</p>
-                <p style="font-size: 1em; line-height: 1.6;">
-                    Don't worry! Every great astronaut learns from challenges! 🌟 
-                    Click the AI tutor button to learn what happened and how to improve next time!
+                <p style="font-size: 1.1em; margin-bottom: 10px;"><strong>Challenge Encountered:</strong> {{ state.error_code }}</p>
+                
+                <!-- Helpful Error Explanations -->
+                <div class="edu-card" style="margin: 20px 0; background: rgba(255, 107, 157, 0.1); border-color: rgba(255, 107, 157, 0.3);">
+                    <div class="edu-card-title" style="color: #ff6b9d;">💡 What Happened?</div>
+                    <div class="edu-card-content">
+                        {% if state.error_code == 'HIGH_VELOCITY_IMPACT' %}
+                        <strong>High Velocity Impact:</strong> Your spacecraft was moving too fast when it reached the surface. 
+                        You need more retro-burn time to slow down! Try increasing your burn duration next time. 🛑
+                        {% elif state.error_code == 'LOW_FUEL_LAUNCH' or state.error_code == 'OUT_OF_FUEL_CRUISE' or state.error_code == 'OUT_OF_FUEL_BURN' %}
+                        <strong>Out of Fuel:</strong> You ran out of fuel! This means you used too much fuel earlier in the mission. 
+                        Try being more efficient with your TWR and burns. ⛽
+                        {% elif state.error_code == 'GRAVITY_FAIL' %}
+                        <strong>Gravity Too Strong:</strong> Your TWR was less than 1.0, so gravity won! 
+                        You need TWR > 1.0 to lift off. Try a higher TWR value! 🚀
+                        {% elif state.error_code == 'LOW_FUEL_LANDING_CRASH' %}
+                        <strong>Landing Fuel Shortage:</strong> You didn't have enough fuel for the landing burn. 
+                        Save more fuel during launch and cruise phases! 🛸
+                        {% elif state.error_code == 'STRANDED_NO_RETURN_FUEL' %}
+                        <strong>Stranded:</strong> Not enough fuel to return home! Always save fuel for the return journey. 
+                        Plan your fuel usage throughout the mission! 🏠
+                        {% else %}
+                        <strong>Mission Challenge:</strong> Every great astronaut learns from challenges! 
+                        Click the 🤖 AI Tutor button to get personalized help understanding what happened! 🌟
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Mission Statistics Even on Failure -->
+                <div class="mission-stats">
+                    <div class="stat-card">
+                        <div class="stat-label">⏱️ Mission Duration</div>
+                        <div class="stat-value">{{ state.mission_day }}</div>
+                        <div class="stat-label">days</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">⛽ Fuel Remaining</div>
+                        <div class="stat-value">{{ state.fuel | round(0) | int }}</div>
+                        <div class="stat-label">units</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">📡 Distance Traveled</div>
+                        <div class="stat-value">{{ (state.altitude_km / 1000000) | round(1) }}M</div>
+                        <div class="stat-label">km</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">⚡ Final Velocity</div>
+                        <div class="stat-value">{{ state.velocity_km_s | round(2) }}</div>
+                        <div class="stat-label">km/s</div>
+                    </div>
+                </div>
+                
+                <p style="font-size: 1em; line-height: 1.6; margin-top: 20px;">
+                    <strong>Don't give up!</strong> Every great astronaut learns from challenges! 🌟<br>
+                    Click the <strong>🤖 AI Tutor button</strong> (bottom right) to learn what happened and how to improve next time!
                 </p>
-                <div style="text-align: center; margin-top: 20px;">
-                    <a href="{{ url_for('reset_mission') }}" class="btn btn-danger" style="text-decoration: none; display: inline-block; max-width: 400px;">
+                
+                <div style="text-align: center; margin-top: 30px;">
+                    <a href="{{ url_for('reset_mission') }}" class="btn btn-danger" style="text-decoration: none; display: inline-block; max-width: 400px; margin-right: 15px;">
                         <span>🔄 Start New Mission!</span>
                     </a>
+                    <button onclick="openAiTutor('I failed the mission with error code {{ state.error_code }}. Explain what went wrong and how I can improve next time!')" class="btn" style="background: linear-gradient(135deg, #6366f1, #8b5cf6); max-width: 400px;">
+                        <span>🤖 Ask AI Tutor for Help</span>
+                    </button>
                 </div>
             </div>
         </div>
@@ -1181,7 +1443,18 @@
                     </div>
                     <div class="metric-card-compact">
                         <div class="metric-label-compact">⚡ Velocity</div>
-                        <div class="metric-value-compact">{{ state.velocity_km_s | round(2) }}</div>
+                        <div class="metric-value-compact">
+                            {{ state.velocity_km_s | round(2) }}
+                            {% if state.status == 'LANDING_PREP' %}
+                                {% if state.velocity_km_s <= 0.15 %}
+                                <span class="velocity-indicator velocity-safe">SAFE</span>
+                                {% elif state.velocity_km_s <= 1.0 %}
+                                <span class="velocity-indicator velocity-warning">WARNING</span>
+                                {% else %}
+                                <span class="velocity-indicator velocity-danger">TOO FAST</span>
+                                {% endif %}
+                            {% endif %}
+                        </div>
                     </div>
                     <div class="metric-card-compact">
                         <div class="metric-label-compact">🔬 Data</div>
@@ -1191,7 +1464,7 @@
 
                 <!-- Rocket Animation -->
                 <div class="rocket-container">
-                    <div class="rocket" id="rocket">
+                    <div class="rocket{% if state.status == 'PRE_LAUNCH' %} rocket-launching{% endif %}" id="rocket">
                         {% if state.status == 'PRE_LAUNCH' %}🚀
                         {% elif state.status == 'CRUISING' %}🛸
                         {% elif state.status == 'LANDING_PREP' %}🛸
@@ -1200,6 +1473,21 @@
                         {% endif %}
                     </div>
                 </div>
+                
+                <!-- Real-time Mission Info -->
+                {% if state.status == 'CRUISING' %}
+                <div style="margin-top: 15px; padding: 15px; background: rgba(0, 0, 0, 0.3); border-radius: 12px; border: 2px solid rgba(100, 200, 255, 0.3);">
+                    <div style="font-size: 0.9em; color: #64ffda; margin-bottom: 8px; font-weight: bold;">🌌 Current Status</div>
+                    <div style="font-size: 0.85em; color: #b0bec5; line-height: 1.8;">
+                        <div>Speed: <strong style="color: #64ffda;">{{ state.velocity_km_s | round(2) }} km/s</strong></div>
+                        <div>Traveled: <strong style="color: #64ffda;">{{ (state.altitude_km / 1000000) | round(1) }}M km</strong></div>
+                        <div>Remaining: <strong style="color: #f8b500;">{{ ((state.target_distance_km - state.altitude_km) / 1000000) | round(1) }}M km</strong></div>
+                        <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(100, 255, 218, 0.2);">
+                            <em style="color: #64ffda;">💡 Each 10-day step covers ~{{ (state.velocity_km_s * 10 * 24 * 3600 / 1000000) | round(1) }}M km at current speed</em>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
             </div>
 
             <!-- Center Panel: Control Panel -->
@@ -1465,7 +1753,7 @@
                         <p style="margin-top: 8px;">
                             You're approaching <strong>{{ state.target_planet_data.name }}</strong>!<br>
                             Current velocity: <strong style="color: #ff6b9d;">{{ state.velocity_km_s | round(2) }} km/s</strong><br>
-                            <strong style="color: #00e676;">Target:</strong> Less than <strong>0.05 km/s</strong> for safe landing! 🛸<br><br>
+                            <strong style="color: #00e676;">Target:</strong> Less than <strong>0.15 km/s</strong> for safe landing! 🛸<br><br>
                             <strong>Planet Info:</strong> Gravity = {{ (0.0005 * state.target_planet_data.gravityFactor * 1000) | round(2) }} m/s²
                             {% if state.target_planet_data.atmosphereDrag > 1.5 %}
                             | <span style="color: #f8b500;">High Atmosphere</span> (helps slow you down!)
@@ -1495,12 +1783,13 @@
                                         A retro-burn fires your engines <strong>backward</strong> to slow down!<br><br>
                                         <strong>Think of it like:</strong> Throwing a ball forward, then throwing another ball backward to slow it down! ⚾←⚾<br><br>
                                         <strong>Current Speed:</strong> {{ state.velocity_km_s | round(2) }} km/s<br>
-                                        <strong>Need:</strong> < 0.05 km/s<br>
-                                        <strong>Difference:</strong> {{ (state.velocity_km_s - 0.05) | round(2) }} km/s to slow down!
+                                        <strong>Need:</strong> < 0.15 km/s for safe landing<br>
+                                        <strong>Difference:</strong> {{ (state.velocity_km_s - 0.15) | round(2) }} km/s to slow down!<br><br>
+                                        <strong>Tip:</strong> Each second of burn reduces velocity by ~0.5-0.8 km/s depending on the planet!
                                     </span>
                                 </span>
                             </label>
-                            <input type="range" id="burn_duration" name="burn_duration" min="0" max="15" step="1" value="5" required>
+                            <input type="range" id="burn_duration" name="burn_duration" min="0" max="30" step="1" value="5" required>
                             <div style="text-align: center; margin-top: 10px;">
                                 <span id="burn-value" style="font-family: 'Orbitron', sans-serif; font-size: 2em; color: #f8b500; text-shadow: 0 0 20px rgba(248, 181, 0, 0.8);">5</span> seconds
                             </div>
@@ -1510,14 +1799,15 @@
                                 <span>Too Long</span>
                             </div>
                             <div class="input-hint">
-                                💡 Tip: Start with 3-7 seconds. 
-                                {% if state.velocity_km_s > 5 %}
-                                Your velocity is HIGH - you'll need a longer burn!
-                                {% elif state.velocity_km_s < 2 %}
-                                Your velocity is moderate - a shorter burn might work.
+                                💡 Tip: 
+                                {% if state.velocity_km_s > 3 %}
+                                Your velocity is HIGH ({{ state.velocity_km_s | round(2) }} km/s) - try 8-15 seconds of burn!
+                                {% elif state.velocity_km_s > 1.5 %}
+                                Your velocity is moderate ({{ state.velocity_km_s | round(2) }} km/s) - try 5-10 seconds!
                                 {% else %}
-                                Your velocity is moderate - adjust based on results!
+                                Your velocity is low ({{ state.velocity_km_s | round(2) }} km/s) - try 3-6 seconds!
                                 {% endif %}
+                                Each second reduces velocity by ~0.5-0.8 km/s.
                             </div>
                         </div>
                         
@@ -1827,7 +2117,7 @@
                         🌌 Choose Your Mission Destination 🌌
                     </h2>
                 <p style="font-size: 1.5em; color: #ffffff; margin-bottom: 15px; font-weight: 600;">
-                    Welcome, Future Astronaut! 🚀
+                    Welcome, {% if space_name %}{{ space_name }}{% else %}Future Astronaut{% endif %}! 🚀
                 </p>
                 <p style="text-align: center; font-size: 1.3em; color: #b0bec5; margin-bottom: 20px; line-height: 1.6;">
                     Pick an amazing exoplanet to explore! Each mission teaches you different space science concepts!<br>
@@ -2007,7 +2297,7 @@
             }
         }
 
-        // Slider value updates
+        // Slider value updates with visual feedback
         document.addEventListener('DOMContentLoaded', function() {
             createStars();
             
@@ -2018,7 +2308,20 @@
                 thrustSlider.addEventListener('input', (e) => {
                     const valueDisplay = document.getElementById('thrust-value');
                     if (valueDisplay) {
-                        valueDisplay.textContent = e.target.value;
+                        const value = parseFloat(e.target.value);
+                        valueDisplay.textContent = value;
+                        
+                        // Visual feedback based on TWR value
+                        if (value >= 1.2 && value <= 1.8) {
+                            valueDisplay.style.color = '#00e676'; // Green for optimal
+                            valueDisplay.style.textShadow = '0 0 20px rgba(0, 230, 118, 0.8)';
+                        } else if (value < 1.2) {
+                            valueDisplay.style.color = '#f8b500'; // Yellow for low
+                            valueDisplay.style.textShadow = '0 0 20px rgba(248, 181, 0, 0.8)';
+                        } else {
+                            valueDisplay.style.color = '#ff6b9d'; // Pink for high
+                            valueDisplay.style.textShadow = '0 0 20px rgba(255, 107, 157, 0.8)';
+                        }
                     }
                 });
             }
@@ -2027,9 +2330,23 @@
                 slider.addEventListener('input', (e) => {
                     const valueDisplay = document.getElementById('burn-value');
                     if (valueDisplay) {
-                        valueDisplay.textContent = e.target.value;
+                        const value = parseInt(e.target.value);
+                        valueDisplay.textContent = value;
+                        
+                        // Pulse animation for feedback
+                        valueDisplay.style.animation = 'none';
+                        setTimeout(() => {
+                            valueDisplay.style.animation = 'pulse 0.3s ease-out';
+                        }, 10);
                     }
                 });
+            });
+            
+            // Add slide-in animation to cards
+            const cards = document.querySelectorAll('.status-card, .dashboard-panel, .planet-card');
+            cards.forEach((card, index) => {
+                card.style.animationDelay = `${index * 0.1}s`;
+                card.classList.add('slide-in');
             });
         });
 
@@ -2194,14 +2511,7 @@
             document.body.classList.remove('overflow-hidden');
         }
 
-        // Auto-open AI tutor on failure
-        {% if state.status == 'FAILURE' %}
-        window.onload = function() {
-            setTimeout(() => {
-                openAiTutor("I just failed the mission with error code '{{ state.error_code }}'. Explain what went wrong in simple, fun terms that a middle school student can understand!");
-            }, 1000);
-        };
-        {% endif %}
+        // AI tutor only opens when user clicks the button - no auto-open on failure
     </script>
 </body>
 </html>

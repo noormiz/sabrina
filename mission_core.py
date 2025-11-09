@@ -8,7 +8,7 @@ SIM_CONSTANTS = {
     "FUEL_PER_DAY": 2.0,            # Routine fuel consumed per mission day (increased for realism)
     "CRUISE_STEP_DAYS": 10,         # How many days each "cruise step" represents
     "ESCAPE_VELOCITY": 8.0,         # km/s (Lowered to make launch easier - still educational)
-    "IMPACT_VELOCITY_MAX": 0.1,     # km/s maximum for a safe landing (more forgiving)
+    "IMPACT_VELOCITY_MAX": 0.15,    # km/s maximum for a safe landing (more forgiving for kids)
     "PLANET_GRAVITY_BASE": 0.0005,  # Base gravity constant
     "FUEL_PER_SECOND_BURN": 2.0,    # Fuel per second of burn (slightly higher)
     "DATA_COLLECTION_FUEL_COST": 40, # Reduced for better balance
@@ -237,16 +237,17 @@ def landing_step(state, retro_burn_duration_s):
     
     # 2. Simplified Physics: More intuitive velocity reduction
     # Each second of burn reduces velocity by a predictable amount
-    base_deceleration = 0.4  # km/s per second of burn (more effective)
+    # Increased significantly to make landing achievable
+    base_deceleration = 0.8  # km/s per second of burn (increased from 0.4 for easier landing)
     
     # Planet factors affect deceleration:
     # - Higher gravity = harder to slow down (reduces deceleration)
     # - Higher atmosphere = helps slow down (increases deceleration)
-    gravity_penalty = planet_data["gravityFactor"] * 0.1  # Higher gravity makes it harder
-    atmosphere_help = planet_data["atmosphereDrag"] * 0.05  # Atmosphere helps slow down
+    gravity_penalty = planet_data["gravityFactor"] * 0.05  # Reduced penalty (was 0.1)
+    atmosphere_help = planet_data["atmosphereDrag"] * 0.1  # Increased help (was 0.05)
     
     effective_deceleration = base_deceleration - gravity_penalty + atmosphere_help
-    effective_deceleration = max(0.2, effective_deceleration)  # Minimum deceleration
+    effective_deceleration = max(0.5, effective_deceleration)  # Higher minimum (was 0.2)
     
     # Total velocity reduction = burn duration * effective deceleration
     velocity_reduction = retro_burn_duration_s * effective_deceleration
