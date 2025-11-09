@@ -19,38 +19,47 @@ SIM_CONSTANTS = {
 }
 
 EXOPLANETS = {
-    "Aetheria": {
-        "name": "Aetheria", "type": "Frozen Moon", "distance": "15 Light Years",
-        "icon": "🌙", "bgColor": "bg-indigo-900", "focus": "Orbital Mechanics & Scale",
-        # Scaled down by 100 for gameplay: 1.5B km -> 15M km (takes ~2-3 steps at 8-10 km/s)
-        "simDistanceKm": 15000000, "gravityFactor": 0.8, "atmosphereDrag": 0.1,
-        "atmosphere_elements": ["Nitrogen", "Methane", "Argon"],  # Elements in atmosphere for spectroscopy
-        "transit_depth": 0.008,  # Dip depth (0.8% brightness drop) - small moon
-        "transit_duration_hours": 2.5,  # Transit duration in hours
-        "orbital_period_days": 12.5,  # Days between transits
-        "planet_star_radius_ratio": 0.089,  # Rp/Rs ratio (calculated from depth)
+    "ProximaCentauriB": {
+        "name": "Proxima Centauri b", "type": "Rocky Exoplanet", "distance": "4.24 Light Years",
+        "icon_emoji": "🌍", "bgColor": "bg-indigo-900", "focus": "Orbital Mechanics & Scale",
+        "image_url": "https://exoplanets.nasa.gov/system/resources/detail_files/1890_proxima-b_1600.jpg",
+        "image_alt": "Artist's concept of Proxima Centauri b",
+        # Real distance: ~40 trillion km, scaled down by 2.67M for gameplay: 40T km -> 15M km (takes ~2-3 steps at 8-10 km/s)
+        "simDistanceKm": 15000000, "gravityFactor": 1.1, "atmosphereDrag": 0.3,
+        # Real data: Mass ~1.17 Earth masses, potentially habitable zone, may have atmosphere
+        "atmosphere_elements": ["Nitrogen", "Carbon Dioxide", "Argon"],  # Hypothetical based on rocky planet
+        "transit_depth": 0.0015,  # Dip depth (0.15% brightness drop) - small planet around red dwarf
+        "transit_duration_hours": 1.8,  # Transit duration in hours (11.2 day orbital period)
+        "orbital_period_days": 11.2,  # Real orbital period
+        "planet_star_radius_ratio": 0.039,  # Rp/Rs ratio (estimated)
     },
-    "TerraNova": {
-        "name": "Terra Nova", "type": "Rocky Super-Earth", "distance": "40 Light Years",
-        "icon": "🪐", "bgColor": "bg-red-900", "focus": "Gravity & Thrust",
-        # Scaled down: 4B km -> 40M km (takes ~5-6 steps at 8-10 km/s)
-        "simDistanceKm": 40000000, "gravityFactor": 2.5, "atmosphereDrag": 0.5,
-        "atmosphere_elements": ["Carbon Dioxide", "Sulfur Dioxide", "Nitrogen"],
-        "transit_depth": 0.015,  # Dip depth (1.5% brightness drop) - larger planet
-        "transit_duration_hours": 4.0,
-        "orbital_period_days": 18.0,
-        "planet_star_radius_ratio": 0.122,  # Rp/Rs ratio
+    "TRAPPIST1E": {
+        "name": "TRAPPIST-1e", "type": "Potentially Habitable Super-Earth", "distance": "40 Light Years",
+        "icon_emoji": "🪐", "bgColor": "bg-red-900", "focus": "Gravity & Thrust",
+        "image_url": "https://exoplanets.nasa.gov/system/resources/detail_files/1891_trappist-1e_1600.jpg",
+        "image_alt": "Artist's concept of TRAPPIST-1e",
+        # Real distance: ~378 trillion km, scaled down by 9.45M for gameplay: 378T km -> 40M km (takes ~5-6 steps)
+        "simDistanceKm": 40000000, "gravityFactor": 0.93, "atmosphereDrag": 0.4,
+        # Real data: Mass ~0.62 Earth masses, in habitable zone, one of 7 planets in TRAPPIST-1 system
+        "atmosphere_elements": ["Water Vapor", "Oxygen", "Nitrogen"],  # Potentially habitable
+        "transit_depth": 0.007,  # Dip depth (0.7% brightness drop) - medium planet
+        "transit_duration_hours": 3.0,  # Transit duration
+        "orbital_period_days": 6.1,  # Real orbital period
+        "planet_star_radius_ratio": 0.084,  # Rp/Rs ratio
     },
-    "Kyperus": {
-        "name": "Kyperus", "type": "Ocean World", "distance": "22 Light Years",
-        "icon": "🌊", "bgColor": "bg-blue-900", "focus": "Atmosphere & Pressure",
-        # Scaled down: 2.2B km -> 22M km (takes ~3-4 steps at 8-10 km/s)
-        "simDistanceKm": 22000000, "gravityFactor": 1.2, "atmosphereDrag": 3.0,
-        "atmosphere_elements": ["Water Vapor", "Oxygen", "Nitrogen"],
-        "transit_depth": 0.012,  # Dip depth (1.2% brightness drop) - medium planet
-        "transit_duration_hours": 3.2,
-        "orbital_period_days": 15.0,
-        "planet_star_radius_ratio": 0.110,  # Rp/Rs ratio
+    "Kepler452B": {
+        "name": "Kepler-452b", "type": "Earth's Cousin", "distance": "1,400 Light Years",
+        "icon_emoji": "🌊", "bgColor": "bg-blue-900", "focus": "Atmosphere & Pressure",
+        "image_url": "https://exoplanets.nasa.gov/system/resources/detail_files/1892_kepler-452b_1600.jpg",
+        "image_alt": "Artist's concept of Kepler-452b",
+        # Real distance: ~13.2 quadrillion km, scaled down by 600M for gameplay: 13.2Q km -> 22M km (takes ~3-4 steps)
+        "simDistanceKm": 22000000, "gravityFactor": 2.0, "atmosphereDrag": 1.5,
+        # Real data: Mass ~5 Earth masses, 1.6x Earth radius, in habitable zone, orbits G-type star similar to Sun
+        "atmosphere_elements": ["Water Vapor", "Carbon Dioxide", "Nitrogen"],  # Earth-like potential
+        "transit_depth": 0.0025,  # Dip depth (0.25% brightness drop) - larger planet
+        "transit_duration_hours": 4.5,  # Transit duration
+        "orbital_period_days": 384.8,  # Real orbital period (similar to Earth's year)
+        "planet_star_radius_ratio": 0.050,  # Rp/Rs ratio
     }
 }
 
@@ -174,6 +183,7 @@ class MissionState:
         self.mission_day = 0            # Tracks time/steps taken
         self.spectroscopy_completed = False  # Track if spectroscopy activity is done
         self.transit_photometry_completed = False  # Track if transit photometry activity is done
+        self.phase_before_failure = None  # Store the phase before failure for retry functionality
 
         self.initial_fuel = 1000
         self.fuel = self.initial_fuel
@@ -209,6 +219,23 @@ class MissionState:
         self.target_planet_data = EXOPLANETS[planet_key]
         self.target_distance_km = self.target_planet_data["simDistanceKm"]
         self.status = "PRE_LAUNCH"
+    
+    def retry_from_failure(self):
+        """Retry the mission from the phase where it failed, keeping current progress."""
+        if self.status != "FAILURE" or not self.phase_before_failure:
+            return False
+        
+        # Restore the phase before failure
+        self.status = self.phase_before_failure
+        self.error_code = None  # Clear the error
+        
+        # For certain phases, we might need to adjust state
+        if self.phase_before_failure == "LANDING_PREP":
+            # If we're retrying landing, make sure we're at the planet
+            if self.altitude_km < self.target_distance_km:
+                self.altitude_km = self.target_distance_km
+        
+        return True
 
 
 # --- MISSION STEP FUNCTIONS ---
@@ -239,11 +266,13 @@ def launch_step(state, twr):
     # Check for failure BEFORE changing state
     if state.fuel < fuel_consumed:
         state.error_code = "LOW_FUEL_LAUNCH"
+        state.phase_before_failure = "PRE_LAUNCH"
         state.status = "FAILURE"
         return "Launch aborted due to insufficient fuel."
         
     if twr < 1.0:
         state.error_code = "GRAVITY_FAIL"
+        state.phase_before_failure = "PRE_LAUNCH"
         state.status = "FAILURE"
         return "Thrust too low. Gravity wins. TWR must be > 1.0 to lift off!"
 
@@ -295,6 +324,7 @@ def cruise_step(state, burn_duration_s=0):
         fuel_consumed_burn = burn_duration_s * SIM_CONSTANTS["FUEL_PER_SECOND_BURN"]
         if state.fuel < fuel_consumed_burn:
             state.error_code = "OUT_OF_FUEL_BURN"
+            state.phase_before_failure = "CRUISING"
             state.status = "FAILURE" 
             return "CRITICAL FAILURE: Ran out of fuel during mid-course correction."
         
@@ -309,6 +339,7 @@ def cruise_step(state, burn_duration_s=0):
     fuel_consumed_routine = days * SIM_CONSTANTS["FUEL_PER_DAY"]
     if state.fuel < fuel_consumed_routine:
         state.error_code = "OUT_OF_FUEL_CRUISE"
+        state.phase_before_failure = "CRUISING"
         state.status = "FAILURE" 
         return "CRITICAL FAILURE: Ran out of fuel mid-course. Vehicle is adrift."
         
@@ -356,6 +387,7 @@ def landing_step(state, retro_burn_duration_s):
 
     if state.fuel < fuel_consumed:
         state.error_code = "LOW_FUEL_LANDING_CRASH"
+        state.phase_before_failure = "LANDING_PREP"
         state.status = "FAILURE"
         return "CRITICAL FAILURE: Ran out of fuel during retro-burn, leading to impact."
 
@@ -394,6 +426,7 @@ def landing_step(state, retro_burn_duration_s):
         additional_burn_needed = int(velocity_needed / effective_deceleration) + 1
         
         state.error_code = "HIGH_VELOCITY_IMPACT"
+        state.phase_before_failure = "LANDING_PREP"
         state.status = "FAILURE"
         return f"CATASTROPHIC FAILURE: Impacted at {state.velocity_km_s:.2f} km/s. Need ~{additional_burn_needed} more seconds of retro-burn for safe landing."
 
@@ -408,11 +441,13 @@ def collect_data(state):
 
     if state.fuel < SIM_CONSTANTS["DATA_COLLECTION_FUEL_COST"]:
         state.error_code = "INSUFFICIENT_FUEL_DATA"
+        state.phase_before_failure = "SURFACE_DATA"
         state.status = "FAILURE"
         return "FAILURE: Insufficient power for data systems. Must abort mission."
         
     state.fuel -= SIM_CONSTANTS["DATA_COLLECTION_FUEL_COST"]
-    state.collected_data_units = state.required_data_units
+    # Don't add any data units - activities already gave points
+    # state.collected_data_units remains as is (from activities)
     state.mission_day += 5 
     state.status = "RETURN_PREP"
     
@@ -426,6 +461,7 @@ def return_home(state):
         
     if state.fuel < SIM_CONSTANTS["FUEL_FOR_RETURN_BURN"]:
         state.error_code = "STRANDED_NO_RETURN_FUEL"
+        state.phase_before_failure = "RETURN_PREP"
         state.status = "FAILURE"
         return "FAILURE: Not enough fuel for the return burn. Crew is stranded."
 
@@ -435,5 +471,6 @@ def return_home(state):
         return "Mission COMPLETE! Crew is on course for Earth return."
     else:
         state.error_code = "MISSION_GOAL_FAILED"
+        state.phase_before_failure = "RETURN_PREP"
         state.status = "FAILURE"
         return "FAILURE: Mission aborted. Did not collect required scientific data."

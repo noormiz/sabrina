@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sabrina: Exoplanet Mission</title>
+    <title>SABRINA: Exoplanet Mission</title>
     <!-- Load Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Use Inter font -->
@@ -366,31 +366,31 @@
                 // Critical failure: Gravity is stronger than thrust
                 feedback = `FATAL ERROR: Thrust too low (${twr}). Gravity pulled the rocket down. Mission failed on launch.`;
                 aiExplanationNeeded = true;
-            } else if (planet.name === 'Terra Nova') {
+            } else if (planet.name === 'Kepler-452b') {
                 // High gravity planet requires high thrust (e.g., TWR > 2.0)
                 if (twr >= 2.0) {
                     success = true;
-                    feedback = `SUCCESS! TWR of ${twr} was perfect to escape Earth and conserve enough fuel for the high-gravity Terra Nova landing.`;
+                    feedback = `SUCCESS! TWR of ${twr} was perfect to escape Earth and conserve enough fuel for the high-gravity Kepler-452b landing.`;
                 } else {
-                    feedback = `MISSION ERROR: TWR of ${twr} was too low for a mission to Terra Nova. You used too much fuel fighting gravity on Earth, and won't have enough for landing.`;
+                    feedback = `MISSION ERROR: TWR of ${twr} was too low for a mission to Kepler-452b. You used too much fuel fighting gravity on Earth, and won't have enough for landing.`;
                     aiExplanationNeeded = true;
                 }
-            } else if (planet.name === 'Aetheria') {
-                // Distant planet requires high efficiency (e.g., TWR between 1.2 and 1.8)
+            } else if (planet.name === 'Proxima Centauri b') {
+                // Closest planet requires high efficiency (e.g., TWR between 1.2 and 1.8)
                 if (twr >= 1.2 && twr <= 1.8) {
                     success = true;
-                    feedback = `SUCCESS! TWR of ${twr} was highly efficient, conserving maximum fuel for the long cruise to Aetheria.`;
+                    feedback = `SUCCESS! TWR of ${twr} was highly efficient, conserving maximum fuel for the journey to Proxima Centauri b.`;
                 } else if (twr > 1.8) {
-                    feedback = `MISSION ERROR: TWR of ${twr} was too high for Aetheria. You wasted valuable fuel that is needed for the long cruise phase.`;
+                    feedback = `MISSION ERROR: TWR of ${twr} was too high for Proxima Centauri b. You wasted valuable fuel that is needed for the cruise phase.`;
                     aiExplanationNeeded = true;
                 } else { // twr between 1.0 and 1.2
                     feedback = `MISSION ERROR: TWR of ${twr} resulted in a very slow and costly ascent. Fuel consumption was high.`;
                     aiExplanationNeeded = true;
                 }
-            } else { // Kyperus (Standard condition)
+            } else { // TRAPPIST-1e (Standard condition)
                 if (twr > 1.0 && twr <= 2.5) {
                     success = true;
-                    feedback = `SUCCESS! TWR of ${twr} was efficient for a standard mission to Kyperus.`;
+                    feedback = `SUCCESS! TWR of ${twr} was efficient for a standard mission to TRAPPIST-1e.`;
                 } else if (twr > 2.5) {
                     feedback = `MISSION ERROR: TWR of ${twr} was excessive. You wasted fuel.`;
                     aiExplanationNeeded = true;

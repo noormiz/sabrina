@@ -776,6 +776,7 @@
         .planet-icon {
             font-size: 5em;
             margin: 20px 0;
+            display: inline-block;
             animation: float 4s ease-in-out infinite;
             filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.5));
             transition: all 0.4s ease;
@@ -1205,13 +1206,36 @@
         /* Achievement Badge */
         .achievement-badge {
             display: inline-block;
-            padding: 10px 20px;
+            padding: 12px 24px;
             background: linear-gradient(135deg, #f8b500, #ff6b9d);
-            border-radius: 25px;
+            border-radius: 30px;
             margin: 5px;
             font-weight: bold;
-            box-shadow: 0 4px 15px rgba(248, 181, 0, 0.5);
-            animation: slideIn 0.5s ease-out;
+            font-size: 1.05em;
+            color: white;
+            box-shadow: 0 6px 20px rgba(248, 181, 0, 0.6);
+            animation: badgePop 0.6s ease-out;
+            transition: all 0.3s ease;
+            cursor: default;
+        }
+        
+        .achievement-badge:hover {
+            transform: scale(1.1) rotate(2deg);
+            box-shadow: 0 8px 25px rgba(248, 181, 0, 0.8);
+        }
+        
+        @keyframes badgePop {
+            0% {
+                transform: scale(0) rotate(-180deg);
+                opacity: 0;
+            }
+            50% {
+                transform: scale(1.2) rotate(10deg);
+            }
+            100% {
+                transform: scale(1) rotate(0deg);
+                opacity: 1;
+            }
         }
         
         /* Interactive Hover Effects */
@@ -1302,23 +1326,33 @@
                     </div>
                     <div class="stat-card">
                         <div class="stat-label">🪐 Planet Explored</div>
-                        <div class="stat-value" style="font-size: 1.5em;">{{ state.target_planet_data.icon if state.target_planet_data else '🌍' }}</div>
+                        <div class="stat-value" style="font-size: 1.5em;">{{ state.target_planet_data.icon_emoji if state.target_planet_data and state.target_planet_data.icon_emoji else '🌍' }}</div>
                         <div class="stat-label">{{ state.target_planet_data.name if state.target_planet_data else 'Unknown' }}</div>
                     </div>
                 </div>
                 
                 <!-- Achievements -->
-                <div style="margin: 20px 0; text-align: center;">
-                    <h3 style="color: #64ffda; margin-bottom: 15px; font-size: 1.3em;">🏆 Mission Achievements</h3>
-                    <div>
-                        <span class="achievement-badge">✅ Successful Landing</span>
-                        <span class="achievement-badge">📊 Data Collection Complete</span>
-                        <span class="achievement-badge">🏠 Safe Return</span>
-                        {% if state.fuel > state.initial_fuel * 0.3 %}
-                        <span class="achievement-badge">⛽ Fuel Efficient</span>
+                <div style="margin: 30px 0; text-align: center;">
+                    <h3 style="color: #64ffda; margin-bottom: 20px; font-size: 1.5em; text-shadow: 0 0 20px rgba(100, 255, 218, 0.6);">🏆 Mission Achievements</h3>
+                    <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-bottom: 25px;">
+                        <span class="achievement-badge" style="background: linear-gradient(135deg, #00e676, #00bcd4); animation-delay: 0s;">✅ Successful Landing</span>
+                        <span class="achievement-badge" style="background: linear-gradient(135deg, #6366f1, #8b5cf6); animation-delay: 0.1s;">📊 Data Collection Complete</span>
+                        <span class="achievement-badge" style="background: linear-gradient(135deg, #f8b500, #ff9800); animation-delay: 0.2s;">🏠 Safe Return</span>
+                        {% if state.fuel > state.initial_fuel * 0.5 %}
+                        <span class="achievement-badge" style="background: linear-gradient(135deg, #00e676, #4caf50); animation-delay: 0.3s;">⛽ Fuel Master</span>
+                        {% elif state.fuel > state.initial_fuel * 0.3 %}
+                        <span class="achievement-badge" style="background: linear-gradient(135deg, #f8b500, #ffc107); animation-delay: 0.3s;">⛽ Fuel Efficient</span>
                         {% endif %}
-                        {% if state.mission_day < 100 %}
-                        <span class="achievement-badge">⚡ Fast Mission</span>
+                        {% if state.mission_day < 50 %}
+                        <span class="achievement-badge" style="background: linear-gradient(135deg, #ff6b9d, #e91e63); animation-delay: 0.4s;">⚡ Speed Demon</span>
+                        {% elif state.mission_day < 100 %}
+                        <span class="achievement-badge" style="background: linear-gradient(135deg, #f8b500, #ff9800); animation-delay: 0.4s;">⚡ Fast Mission</span>
+                        {% endif %}
+                        {% if state.collected_data_units >= 50 %}
+                        <span class="achievement-badge" style="background: linear-gradient(135deg, #9c27b0, #673ab7); animation-delay: 0.5s;">🔬 Data Scientist</span>
+                        {% endif %}
+                        {% if state.spectroscopy_completed and state.transit_photometry_completed %}
+                        <span class="achievement-badge" style="background: linear-gradient(135deg, #00bcd4, #0097a7); animation-delay: 0.6s;">🌟 Complete Explorer</span>
                         {% endif %}
                     </div>
                 </div>
@@ -1336,8 +1370,27 @@
                     </div>
                 </div>
                 
-                <div style="text-align: center; margin-top: 30px;">
-                    <a href="{{ url_for('reset_mission') }}" class="btn btn-success" style="text-decoration: none; display: inline-block; max-width: 400px;">
+                <!-- Share Section -->
+                <div style="margin: 30px 0; padding: 25px; background: linear-gradient(135deg, rgba(100, 255, 218, 0.15), rgba(248, 181, 0, 0.15)); border-radius: 20px; border: 3px solid rgba(100, 255, 218, 0.4); text-align: center;">
+                    <h3 style="color: #64ffda; margin-bottom: 15px; font-size: 1.4em; text-shadow: 0 0 15px rgba(100, 255, 218, 0.6);">🌟 Share Your Achievement! 🌟</h3>
+                    <p style="color: #b0bec5; margin-bottom: 20px; font-size: 1.1em;">
+                        Show off your space mission success! Share with friends, family, or classmates! 🚀
+                    </p>
+                    <div style="display: flex; flex-wrap: wrap; gap: 15px; justify-content: center;">
+                        <button onclick="shareMission()" class="btn" style="background: linear-gradient(135deg, #6366f1, #8b5cf6); min-width: 200px; font-size: 1.1em; padding: 15px 30px;">
+                            <span>📱 Share Mission</span>
+                        </button>
+                        <button onclick="copyMissionLink()" class="btn" style="background: linear-gradient(135deg, #00e676, #00bcd4); min-width: 200px; font-size: 1.1em; padding: 15px 30px;">
+                            <span>📋 Copy Link</span>
+                        </button>
+                    </div>
+                    <div id="share-feedback" style="margin-top: 15px; display: none; padding: 10px; background: rgba(0, 230, 118, 0.2); border-radius: 10px; color: #00e676; font-weight: bold;">
+                        ✅ Link copied to clipboard!
+                    </div>
+                </div>
+                
+                <div style="text-align: center; margin-top: 30px; display: flex; flex-wrap: wrap; gap: 15px; justify-content: center;">
+                    <a href="{{ url_for('reset_mission') }}" class="btn btn-success" style="text-decoration: none; display: inline-block; min-width: 250px; font-size: 1.1em; padding: 15px 30px;">
                         <span>🚀 Launch Another Mission!</span>
                     </a>
                 </div>
@@ -1401,18 +1454,28 @@
                     </div>
                 </div>
                 
-                <p style="font-size: 1em; line-height: 1.6; margin-top: 20px;">
-                    <strong>Don't give up!</strong> Every great astronaut learns from challenges! 🌟<br>
-                    Click the <strong>🤖 AI Tutor button</strong> (bottom right) to learn what happened and how to improve next time!
-                </p>
+                <div class="edu-card" style="margin-top: 20px; background: rgba(100, 255, 218, 0.15); border-color: rgba(100, 255, 218, 0.4);">
+                    <div class="edu-card-title" style="color: #64ffda;">💪 Learning Opportunity!</div>
+                    <div class="edu-card-content">
+                        <strong>Don't give up!</strong> Every great astronaut learns from challenges! 🌟<br>
+                        You can <strong>retry from this phase</strong> to try again with different choices, or chat with the AI tutor to understand what went wrong!
+                    </div>
+                </div>
                 
-                <div style="text-align: center; margin-top: 30px;">
-                    <a href="{{ url_for('reset_mission') }}" class="btn btn-danger" style="text-decoration: none; display: inline-block; max-width: 400px; margin-right: 15px;">
-                        <span>🔄 Start New Mission!</span>
-                    </a>
-                    <button onclick="openAiTutor('I failed the mission with error code {{ state.error_code }}. Explain what went wrong and how I can improve next time!')" class="btn" style="background: linear-gradient(135deg, #6366f1, #8b5cf6); max-width: 400px;">
+                <div style="text-align: center; margin-top: 30px; display: flex; flex-wrap: wrap; gap: 15px; justify-content: center;">
+                    {% if state.phase_before_failure %}
+                    <form method="POST" action="{{ url_for('retry_mission') }}" style="display: inline-block;">
+                        <button type="submit" class="btn btn-success" style="background: linear-gradient(135deg, #00e676, #00bcd4); min-width: 250px;">
+                            <span>🔄 Retry This Phase</span>
+                        </button>
+                    </form>
+                    {% endif %}
+                    <button onclick="openAiTutor('I failed the mission with error code {{ state.error_code }}. Explain what went wrong and how I can improve next time!')" class="btn" style="background: linear-gradient(135deg, #6366f1, #8b5cf6); min-width: 250px;">
                         <span>🤖 Ask AI Tutor for Help</span>
                     </button>
+                    <a href="{{ url_for('reset_mission') }}" class="btn btn-danger" style="text-decoration: none; display: inline-block; min-width: 250px;">
+                        <span>🔄 Start New Mission</span>
+                    </a>
                 </div>
             </div>
         </div>
@@ -1553,7 +1616,7 @@
                             <!-- Rocket on launch pad -->
                             <div id="launch-rocket" style="position: absolute; left: 50%; bottom: 60px; transform: translateX(-50%); font-size: 2.5em; z-index: 15; filter: drop-shadow(0 0 20px rgba(248, 181, 0, 1));">🚀</div>
                             <!-- Target Planet in distance -->
-                            <div id="launch-target" style="position: absolute; right: 30px; top: 30px; font-size: 2.5em; z-index: 10; filter: drop-shadow(0 0 15px rgba(100, 255, 218, 0.8));">{{ state.target_planet_data.icon }}</div>
+                            <div id="launch-target" style="position: absolute; right: 30px; top: 30px; font-size: 2.5em; z-index: 10; filter: drop-shadow(0 0 15px rgba(100, 255, 218, 0.8));">{{ state.target_planet_data.icon_emoji if state.target_planet_data else '🌍' }}</div>
                             <!-- Label -->
                             <div style="position: absolute; top: 15px; left: 50%; transform: translateX(-50%); font-family: 'Orbitron', sans-serif; color: #f8b500; font-size: 1em; font-weight: bold; text-shadow: 0 0 10px rgba(248, 181, 0, 0.8); z-index: 20;">
                                 Destination: {{ state.target_planet_data.name }}
@@ -1693,7 +1756,7 @@
                             <!-- Rocket -->
                             <div id="rocket-marker" style="position: absolute; font-size: 2.5em; z-index: 15; filter: drop-shadow(0 0 20px rgba(248, 181, 0, 1)); transition: all 0.5s ease-out;">🚀</div>
                             <!-- Target Planet -->
-                            <div id="planet-marker" style="position: absolute; right: 30px; top: 50%; transform: translateY(-50%); font-size: 3em; z-index: 10; filter: drop-shadow(0 0 15px rgba(100, 255, 218, 0.8));">{{ state.target_planet_data.icon }}</div>
+                            <div id="planet-marker" style="position: absolute; right: 30px; top: 50%; transform: translateY(-50%); font-size: 3em; z-index: 10; filter: drop-shadow(0 0 15px rgba(100, 255, 218, 0.8));">{{ state.target_planet_data.icon_emoji if state.target_planet_data else '🌍' }}</div>
                             <!-- Progress label -->
                             <div id="progress-label" style="position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%); font-family: 'Orbitron', sans-serif; color: #64ffda; font-size: 1.1em; font-weight: bold; text-shadow: 0 0 10px rgba(100, 255, 218, 0.8); z-index: 20;">
                                 {{ ((state.altitude_km / state.target_distance_km) * 100) | round }}% Complete
@@ -1822,7 +1885,7 @@
                                 <!-- Landing trajectory will be drawn here -->
                             </svg>
                             <!-- Target Planet -->
-                            <div id="landing-planet" style="position: absolute; right: 30px; bottom: 20px; font-size: 4em; z-index: 10; filter: drop-shadow(0 0 15px rgba(100, 255, 218, 0.8));">{{ state.target_planet_data.icon }}</div>
+                            <div id="landing-planet" style="position: absolute; right: 30px; bottom: 20px; font-size: 4em; z-index: 10; filter: drop-shadow(0 0 15px rgba(100, 255, 218, 0.8));">{{ state.target_planet_data.icon_emoji if state.target_planet_data else '🌍' }}</div>
                             <!-- Rocket approaching -->
                             <div id="landing-rocket" style="position: absolute; font-size: 2.5em; z-index: 15; filter: drop-shadow(0 0 20px rgba(255, 107, 157, 1)); transition: all 0.5s ease-out;">🚀</div>
                             <!-- Velocity indicator -->
@@ -1979,7 +2042,7 @@
                                     🌈 Start Spectroscopy
                                 </a>
                                 {% if state.spectroscopy_completed %}
-                                <p style="color: #00e676; margin-top: 10px; font-weight: bold; font-size: 0.9em;">✅ Completed! +10 data units</p>
+                                <p style="color: #00e676; margin-top: 10px; font-weight: bold; font-size: 0.9em;">✅ Completed! +25 data units</p>
                                 {% endif %}
                             </div>
                         </div>
@@ -1992,26 +2055,54 @@
                                     🔭 Start Photometry
                                 </a>
                                 {% if state.transit_photometry_completed %}
-                                <p style="color: #00e676; margin-top: 10px; font-weight: bold; font-size: 0.9em;">✅ Completed! +10 data units</p>
+                                <p style="color: #00e676; margin-top: 10px; font-weight: bold; font-size: 0.9em;">✅ Completed! +25 data units</p>
                                 {% endif %}
                             </div>
                         </div>
                     </div>
                     
-                    <form method="POST" action="{{ url_for('collect') }}" style="display: flex; flex-direction: column; flex: 1; justify-content: center;">
-                        <div style="text-align: center; margin-bottom: 20px; padding: 15px; background: rgba(0, 230, 118, 0.1); border-radius: 10px; border: 2px solid rgba(0, 230, 118, 0.3);">
-                            <p style="color: #00e676; font-weight: bold; margin-bottom: 8px;">Fuel Required: 50 units</p>
-                            <p style="color: #b0bec5;">Current Fuel: <strong style="color: #ffffff;">{{ state.fuel | round(0) | int }} units</strong></p>
-                            {% if state.fuel < 50 %}
-                            <p style="color: #ff6b9d; margin-top: 8px;">⚠️ Warning: Low fuel! Make sure you have enough for the return journey!</p>
-                            {% else %}
-                            <p style="color: #00e676; margin-top: 8px;">✅ You have enough fuel!</p>
-                            {% endif %}
-                        </div>
-                        <button type="submit" class="btn btn-success">
-                            <span>🔬 COLLECT DATA & PREPARE RETURN</span>
-                        </button>
-                    </form>
+                    <div style="margin-bottom: 20px; padding: 15px; background: rgba(0, 230, 118, 0.1); border-radius: 10px; border: 2px solid rgba(0, 230, 118, 0.3);">
+                        <p style="color: #00e676; font-weight: bold; margin-bottom: 8px;">Fuel Required: 50 units</p>
+                        <p style="color: #b0bec5;">Current Fuel: <strong style="color: #ffffff;">{{ state.fuel | round(0) | int }} units</strong></p>
+                        {% if state.fuel < 50 %}
+                        <p style="color: #ff6b9d; margin-top: 8px;">⚠️ Warning: Low fuel! Make sure you have enough for the return journey!</p>
+                        {% else %}
+                        <p style="color: #00e676; margin-top: 8px;">✅ You have enough fuel!</p>
+                        {% endif %}
+                        <p style="color: #f8b500; margin-top: 12px; font-weight: bold;">
+                            📊 Data Collected: <strong style="color: #ffffff;">{{ state.collected_data_units }} / {{ state.required_data_units }} units</strong>
+                        </p>
+                        {% if not state.spectroscopy_completed or not state.transit_photometry_completed %}
+                        <p style="color: #ff6b9d; margin-top: 10px; font-weight: bold;">
+                            ⚠️ Complete both activities above to proceed! (Each gives 25 data units)
+                        </p>
+                        {% else %}
+                        <p style="color: #00e676; margin-top: 10px; font-weight: bold;">
+                            ✅ Both activities completed! Ready to proceed.
+                        </p>
+                        {% endif %}
+                    </div>
+                    
+                    <div style="display: flex; flex-direction: column; flex: 1; justify-content: center;">
+                        {% if state.spectroscopy_completed and state.transit_photometry_completed %}
+                        <form method="POST" action="{{ url_for('collect') }}">
+                            <button type="submit" class="btn btn-success">
+                                <span>🔬 COLLECT DATA & PREPARE RETURN</span>
+                            </button>
+                        </form>
+                        {% else %}
+                        <form method="POST" action="{{ url_for('collect') }}">
+                            <button type="submit" class="btn btn-success" disabled style="opacity: 0.5; cursor: not-allowed;">
+                                <span>🔬 COLLECT DATA & PREPARE RETURN (Complete activities first)</span>
+                            </button>
+                        </form>
+                        <form method="POST" action="{{ url_for('give_up_activities') }}" style="margin-top: 15px;">
+                            <button type="submit" class="btn" style="background: linear-gradient(135deg, #ff6b9d, #ff9800);" onclick="return confirm('Are you sure you want to skip the activities? You will proceed with {{ state.collected_data_units }} data units instead of the full 50.');">
+                                <span>⏭️ Give Up & Skip Activities</span>
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
                 </div>
 
                 {% elif state.status == 'RETURN_PREP' %}
@@ -2136,7 +2227,7 @@
                         <div style="flex: 1; height: 4px; background: linear-gradient(90deg, #64ffda, transparent); margin: 0 15px; position: relative; border-radius: 10px;">
                             <div style="position: absolute; left: {{ ((state.altitude_km / state.target_distance_km) * 100) | round }}%; top: 50%; transform: translateY(-50%); font-size: 1.5em; transition: left 1s ease-out;">🚀</div>
                         </div>
-                        <div style="font-size: 2em;">{{ state.target_planet_data.icon }}</div>
+                        <div style="font-size: 2em;">{{ state.target_planet_data.icon_emoji if state.target_planet_data else '🌍' }}</div>
                     </div>
                     <div style="text-align: center; font-size: 0.9em; color: #64ffda;">
                         {{ ((state.altitude_km / state.target_distance_km) * 100) | round }}% Complete
@@ -2273,7 +2364,7 @@
                     <button type="submit" class="w-full h-full text-left p-0 border-none bg-transparent" style="height: 100%;">
                         <div class="planet-card" style="height: 100%; display: flex; flex-direction: column;">
                             <div style="text-align: center; margin-bottom: 20px;">
-                                <div class="planet-icon" style="font-size: 6em;">{{ planet.icon }}</div>
+                                <div class="planet-icon" style="font-size: 6em;">{{ planet.icon_emoji }}</div>
                             </div>
                             <h3 style="font-family: 'Orbitron', sans-serif; font-size: 2em; font-weight: bold; color: white; margin-bottom: 15px; text-align: center; text-shadow: 0 0 20px rgba(255, 255, 255, 0.5);">{{ planet.name }}</h3>
                             <p style="font-size: 1.4em; font-weight: 600; color: #64ffda; margin-bottom: 20px; text-align: center; text-shadow: 0 0 15px rgba(100, 255, 218, 0.6);">{{ planet.type }}</p>
@@ -2312,12 +2403,12 @@
                                 </p>
                                 {% else %}
                                 <p style="margin-top: 15px; font-size: 1em; font-style: italic; color: #d0d0d0;">
-                                    {% if key == 'Aetheria' %}
-                                    A mysterious frozen moon with unique orbital challenges. Perfect for learning about navigation and scale!
-                                    {% elif key == 'TerraNova' %}
-                                    A massive super-Earth with intense gravity. Master thrust and escape velocity here!
-                                    {% elif key == 'Kyperus' %}
-                                    An ocean world with dense atmosphere. Learn about atmospheric drag and pressure!
+                                    {% if key == 'ProximaCentauriB' %}
+                                    The closest known exoplanet to Earth! Located just 4.24 light-years away in the habitable zone of Proxima Centauri, our nearest star. Perfect for learning about navigation and scale!
+                                    {% elif key == 'TRAPPIST1E' %}
+                                    One of seven planets in the famous TRAPPIST-1 system! This potentially habitable world orbits an ultra-cool dwarf star. Master thrust and escape velocity here!
+                                    {% elif key == 'Kepler452B' %}
+                                    Known as "Earth's Cousin" - similar size and in the habitable zone of a Sun-like star! Learn about atmospheric drag and pressure on this fascinating world!
                                     {% endif %}
                                 </p>
                                 {% endif %}
@@ -2789,6 +2880,120 @@
         function closeAiTutor() {
             document.getElementById('ai-tutor-modal').classList.add('hidden');
             document.body.classList.remove('overflow-hidden');
+        }
+
+        // Share Mission Functions
+        function shareMission() {
+            const missionText = generateMissionShareText();
+            
+            // Try Web Share API first (mobile devices)
+            if (navigator.share) {
+                navigator.share({
+                    title: '🚀 Mission Complete!',
+                    text: missionText,
+                    url: window.location.href
+                }).catch(err => {
+                    console.log('Share cancelled or failed:', err);
+                    // Fallback to copy
+                    copyMissionLink();
+                });
+            } else {
+                // Fallback to copy
+                copyMissionLink();
+            }
+        }
+        
+        function generateMissionShareText() {
+            {% if state.status == 'SUCCESS' %}
+            const spaceName = '{{ space_name if space_name else "Space Commander" }}';
+            const planetName = '{{ state.target_planet_data.name if state.target_planet_data else "Unknown Planet" }}';
+            const missionDay = {{ state.mission_day }};
+            const dataUnits = {{ state.collected_data_units }};
+            const fuelPercent = {{ ((state.fuel / state.initial_fuel) * 100) | round(0) | int }};
+            
+            let badges = [];
+            {% if state.fuel > state.initial_fuel * 0.5 %}
+            badges.push('⛽ Fuel Master');
+            {% elif state.fuel > state.initial_fuel * 0.3 %}
+            badges.push('⛽ Fuel Efficient');
+            {% endif %}
+            {% if state.mission_day < 50 %}
+            badges.push('⚡ Speed Demon');
+            {% elif state.mission_day < 100 %}
+            badges.push('⚡ Fast Mission');
+            {% endif %}
+            {% if state.collected_data_units >= 50 %}
+            badges.push('🔬 Data Scientist');
+            {% endif %}
+            {% if state.spectroscopy_completed and state.transit_photometry_completed %}
+            badges.push('🌟 Complete Explorer');
+            {% endif %}
+            
+            let badgeText = badges.length > 0 ? '\n🏆 Badges: ' + badges.join(', ') : '';
+            
+            return `🚀 MISSION COMPLETE! 🚀
+
+I just completed a space mission to ${planetName} in SABRINA Space Mission Simulator!
+
+📊 Mission Stats:
+• Duration: ${missionDay} days
+• Data Collected: ${dataUnits} units
+• Fuel Efficiency: ${fuelPercent}% remaining${badgeText}
+
+Try it yourself and become a space explorer! 🌟
+
+${window.location.origin}`;
+            {% else %}
+            return 'Check out SABRINA Space Mission Simulator! 🚀';
+            {% endif %}
+        }
+        
+        function copyMissionLink() {
+            const shareText = generateMissionShareText();
+            const textToCopy = shareText + '\n\n' + window.location.href;
+            
+            // Try modern clipboard API
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(textToCopy).then(() => {
+                    showShareFeedback();
+                }).catch(err => {
+                    console.error('Failed to copy:', err);
+                    fallbackCopy(textToCopy);
+                });
+            } else {
+                // Fallback for older browsers
+                fallbackCopy(textToCopy);
+            }
+        }
+        
+        function fallbackCopy(text) {
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            textArea.style.position = 'fixed';
+            textArea.style.left = '-999999px';
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            
+            try {
+                document.execCommand('copy');
+                showShareFeedback();
+            } catch (err) {
+                console.error('Fallback copy failed:', err);
+                alert('Unable to copy. Please copy manually:\n\n' + text);
+            }
+            
+            document.body.removeChild(textArea);
+        }
+        
+        function showShareFeedback() {
+            const feedback = document.getElementById('share-feedback');
+            if (feedback) {
+                feedback.style.display = 'block';
+                setTimeout(() => {
+                    feedback.style.display = 'none';
+                }, 3000);
+            }
         }
 
         // AI tutor only opens when user clicks the button - no auto-open on failure

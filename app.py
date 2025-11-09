@@ -1,4 +1,4 @@
-import os
+import os # Akbar
 import random
 from flask import Flask, render_template, request, redirect, url_for, jsonify, session
 from mission_core import MissionState, launch_step, cruise_step, landing_step, collect_data, return_home, EXOPLANETS, SPECTROSCOPY_ELEMENTS, get_spectroscopy_data, assess_atmosphere # <-- Import necessary logic
@@ -9,7 +9,7 @@ app.secret_key = os.environ.get('SECRET_KEY', 'sabrina-space-mission-simulator-s
 
 # Get Gemini API key from environment variable (more secure than hardcoding)
 # Fallback to hardcoded key if env var not set (for development only)
-GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', 'AIzaSyAx_kgy_uYyresWInzbHRHB_pQvmu6bEv0')
+GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', 'AIzaSyDZPEoBU-gGTjiPrxzdfrCd6fWmson0dw8')
 
 # Initialize the mission state globally so it persists across user actions
 mission = MissionState()
@@ -17,7 +17,7 @@ mission = MissionState()
 def generate_space_name(name):
     """Generate a fun space-related name for the user."""
     titles = ['Commander', 'Captain', 'Astronaut', 'Pilot', 'Explorer', 'Navigator', 'Mission Specialist']
-    suffixes = ['of the Stars', 'Stellar', 'Cosmic', 'Galactic', 'Nebula', 'Orion', 'Apollo']
+    suffixes = ['of the Stars', 'Stellar', 'Cosmic', 'Galactic', 'Nebula', 'Apollo', 'Voyager']
     
     # Use first name only
     first_name = name.split()[0] if name else 'Explorer'
@@ -158,7 +158,7 @@ def spectroscopy_complete():
     # Mark spectroscopy as completed
     mission.spectroscopy_completed = True
     # Add bonus data units for completing spectroscopy
-    mission.collected_data_units += 10
+    mission.collected_data_units += 25
     
     return redirect(url_for('home'))
 
@@ -187,7 +187,7 @@ def transit_photometry_complete():
     # Mark transit photometry as completed
     mission.transit_photometry_completed = True
     # Add bonus data units for completing transit photometry
-    mission.collected_data_units += 10
+    mission.collected_data_units += 25
     
     return redirect(url_for('home'))
 
@@ -195,6 +195,21 @@ def transit_photometry_complete():
 def collect():
     """Handles the action to collect data on the surface."""
     collect_data(mission)
+    return redirect(url_for('home'))
+
+@app.route('/give_up_activities', methods=['POST'])
+def give_up_activities():
+    """Allows user to skip activities and proceed to return phase."""
+    if mission.status != 'SURFACE_DATA':
+        return redirect(url_for('home'))
+    
+    # Mark both activities as "skipped" (not completed, but allow proceeding)
+    # Don't add any data units since they're giving up
+    mission.spectroscopy_completed = False
+    mission.transit_photometry_completed = False
+    # Proceed to return prep without completing activities
+    mission.status = "RETURN_PREP"
+    
     return redirect(url_for('home'))
 
 
@@ -221,6 +236,19 @@ def restart():
     session.clear()
     mission.__init__()  # Reset mission state
     return redirect(url_for('welcome'))
+
+@app.route('/retry_mission', methods=['POST'])
+def retry_mission():
+    """Retries the mission from the phase where it failed."""
+    if mission.status != 'FAILURE':
+        return redirect(url_for('home'))
+    
+    # Retry from the phase before failure
+    if mission.retry_from_failure():
+        return redirect(url_for('home'))
+    else:
+        # If retry fails, just reset to selection
+        return redirect(url_for('reset_mission'))
 
 
 # --- API Endpoint for the Client-Side AI Tutor ---
