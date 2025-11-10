@@ -1,6 +1,6 @@
 import os # Akbar
 import random
-from flask import Flask, render_template, request, redirect, url_for, jsonify, session
+from flask import Flask, render_template, request, redirect, url_for, jsonify, session, send_from_directory
 from mission_core import MissionState, launch_step, cruise_step, landing_step, collect_data, return_home, EXOPLANETS, SPECTROSCOPY_ELEMENTS, get_spectroscopy_data, assess_atmosphere # <-- Import necessary logic
 
 # Initialize the Flask application
@@ -29,6 +29,12 @@ def generate_space_name(name):
         return f"{title} {first_name} {suffix}"
     else:
         return f"{title} {first_name}"
+
+@app.route('/favicon.ico')
+def favicon():
+    """Serve the favicon.ico file from the static folder."""
+    return send_from_directory(os.path.join(app.root_path, 'static'),
+                              'favicon.ico', mimetype='image/vnd.microsoft.icon')
 
 @app.route('/', methods=['GET'])
 def home():
