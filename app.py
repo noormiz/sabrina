@@ -33,8 +33,9 @@ def generate_space_name(name):
 @app.route('/favicon.ico')
 def favicon():
     """Serve the favicon.ico file from the static folder."""
-    return send_from_directory(os.path.join(app.root_path, 'static'),
-                              'favicon.ico', mimetype='image/vnd.microsoft.icon')
+    # Flask automatically serves files from the 'static' folder
+    # This route ensures /favicon.ico is served correctly
+    return app.send_static_file('favicon.ico')
 
 @app.route('/', methods=['GET'])
 def home():
