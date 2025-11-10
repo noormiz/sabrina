@@ -280,11 +280,21 @@ if __name__ == '__main__':
     else:
         print("Gemini API key loaded successfully!")
     
-    # Setting debug=True restarts the server automatically when you save changes
+    # Production deployment: Use gunicorn (see Procfile)
+    # For local development, run: python app.py
+    # For production, gunicorn will be used and this won't execute
+    # Get port from environment variable (for production) or default to 5000
+    port = int(os.environ.get('PORT', 5000))
+    # Use 0.0.0.0 to accept connections from any IP (needed for production)
+    # Use 127.0.0.1 for local development only
+    host = os.environ.get('HOST', '127.0.0.1')
+    # Debug mode only for local development
+    debug = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
+    
     print("\nStarting Flask server...")
-    print("Server will be available at: http://localhost:5000")
+    print(f"Server will be available at: http://{host}:{port}")
     print("Gemini API key loaded successfully!")
     print("=" * 50)
-    app.run(debug=True, host='127.0.0.1', port=5000)
+    app.run(debug=debug, host=host, port=port)
 
     # Akbar Code
